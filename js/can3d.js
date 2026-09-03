@@ -1076,6 +1076,10 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
   /* --- render sceny do canvasa poza ekranem ------------------------- */
   function offscreen(sc, cam, w, h) {
     const rt = new THREE.WebGLRenderTarget(w, h);
+    // renderer.outputColorSpace dotyczy TYLKO płótna na ekranie. Tekstura celu
+    // renderowania domyślnie zostaje liniowa, więc odczytane piksele wrzucone
+    // do canvasa jako sRGB wychodzą wyraźnie ciemniejsze. Stąd ta linia.
+    rt.texture.colorSpace = THREE.SRGBColorSpace;
     const prevTarget = renderer.getRenderTarget();
     const prevColor = new THREE.Color();
     renderer.getClearColor(prevColor);
@@ -1134,10 +1138,9 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
       scl: can.scale.clone(),
       orbit: orbit.visible
     };
-    // Kafelek jest mały i leży na ciemnym tle, więc render z ekspozycją sceny
-    // wychodzi przygaszony. Na czas miniatur podbijam ją i zaraz przywracam.
+    // lekki podbicie ekspozycji, bo kafelek leży w ciemnym rogu winiety
     const prevExposure = renderer.toneMappingExposure;
-    renderer.toneMappingExposure = 1.5;
+    renderer.toneMappingExposure = 1.12;
 
     orbit.visible = false;                 // owoce nie wchodzą do kafelka
     can.rotation.set(.05, .38, -.14);
