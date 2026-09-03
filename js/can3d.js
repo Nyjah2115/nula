@@ -627,18 +627,22 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
     pts.map(p => new THREE.Vector2(p[0], p[1])), 180
   );
 
-  // szyjka + wieczko z zawiniętym rantem (wieczko 52 mm przy korpusie 66 mm)
+  // Profil przejść zdjęty z modelu generatora (tools/glbprofile.py):
+  // korpus trzyma pion do ~89% wysokości i dopiero tam się załamuje,
+  // a rant ROZSZERZA SIĘ z powrotem — to zawinięcie blachy. Poprzedni obrys
+  // zwężał się monotonicznie i przez to wyglądał jak zaokrąglony walec.
   can.add(new THREE.Mesh(lathe([
-    [R,       TOP        ], [R*.994, TOP+.022], [R*.955, TOP+.055], [R*.890, TOP+.088],
-    [R*.822,  TOP+.113   ], [R*.792, TOP+.130], [R*.784, TOP+.144], [R*.748, TOP+.140],
-    [R*.714,  TOP+.124   ], [R*.36,  TOP+.119], [0,      TOP+.123]
+    [R,      TOP       ], [R*.998, TOP+.030], [R*.985, TOP+.055], [R*.945, TOP+.080],
+    [R*.880, TOP+.100  ], [R*.826, TOP+.116], [R*.802, TOP+.128], [R*.818, TOP+.140],
+    [R*.845, TOP+.150  ], [R*.842, TOP+.161], [R*.800, TOP+.163], [R*.770, TOP+.152],
+    [R*.40,  TOP+.146  ], [0,      TOP+.150]
   ]), metalMat));
 
-  // denko z wklęsłą kopułą
+  // denko: zaokrąglenie na dolnych ~4% wysokości, potem kopuła do środka
   can.add(new THREE.Mesh(lathe([
-    [R,      BOT        ], [R*.994, BOT-.018], [R*.955, BOT-.045], [R*.892, BOT-.073],
-    [R*.808, BOT-.093   ], [R*.678, BOT-.100], [R*.50,  BOT-.082], [R*.28, BOT-.069],
-    [0,      BOT-.067   ]
+    [R,      BOT       ], [R*.995, BOT-.020], [R*.965, BOT-.042], [R*.905, BOT-.060],
+    [R*.830, BOT-.072  ], [R*.800, BOT-.078], [R*.700, BOT-.070], [R*.45,  BOT-.048],
+    [R*.20,  BOT-.036  ], [0,      BOT-.034]
   ]), metalMat));
 
   /* --- warstwa wody: cienka koszulka na korpusie, widoczna tylko tam,
@@ -696,9 +700,9 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
   }
 
   // tarcza wieczka z rowkiem i zawleczką, tuż nad płaskim dnem lathe'a
-  const lid = new THREE.Mesh(new THREE.CircleGeometry(R * .70, 72), lidMat);
+  const lid = new THREE.Mesh(new THREE.CircleGeometry(R * .74, 72), lidMat);
   lid.rotation.x = -Math.PI / 2;
-  lid.position.y = TOP + .1245;
+  lid.position.y = TOP + .1478;
   can.add(lid);
 
   can.rotation.z = -0.26;
