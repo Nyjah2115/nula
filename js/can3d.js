@@ -93,81 +93,29 @@
   const MARK = { cherry: drawCherryMark, blueberry: drawBerryMark, lime: drawLimeMark };
 
   /* =========================================================
-     2. Skropliny — jedno pole kropel dla wszystkich map
+     2. Skropliny z fotografii
 
-     Wcześniej krople na etykiecie i w mapie chropowatości były losowane
-     osobno i w innej rozdzielczości, więc podświetlenie kropli nie leżało
-     tam, gdzie sama kropla. Teraz jedna lista pozycji zasila kolor,
-     chropowatość i mapę normalnych — dopiero to sprawia, że krople
-     wyglądają jak wypukłości, a nie jak nadruk.
+     Mapy powstały narzędziem tools/drops.swift z jednego zdjęcia
+     (media/raw/drops-a.png, OpenArt): normalna, chropowatość i warstwa
+     światła na etykietę. Wszystkie z tego samego kadru, więc kropla
+     w kolorze leży dokładnie tam, gdzie kropla w relief i w połysku.
+     Kadr jest domknięty w poziomie, bo etykieta owija się wokół walca.
      ========================================================= */
   const TW = 2048, TH = 1024;
-  const DROPS = [];
-  for (let i = 0; i < 2400; i++) {
-    DROPS.push({
-      x: Math.random() * TW,
-      y: Math.random() * TH,
-      r: 1.5 + Math.pow(Math.random(), 2.7) * 13
-    });
+
+  const texLoader = new THREE.TextureLoader();
+  function dataTex(url) {
+    const t = texLoader.load(url);
+    t.wrapS = THREE.RepeatWrapping;
+    t.offset.x = .25;                 // ten sam obrót co etykieta
+    t.anisotropy = 8;
+    return t;
   }
-
-  // jedna kropla jako gotowy stempel mapy normalnych (jest obrotowo
-  // symetryczna, więc wystarczy jeden sprite na wszystkie)
-  function dropSprite() {
-    const S = 64, c = document.createElement('canvas');
-    c.width = c.height = S;
-    const g = c.getContext('2d'), img = g.createImageData(S, S), d = img.data, h = S / 2;
-    for (let y = 0; y < S; y++) for (let x = 0; x < S; x++) {
-      const dx = (x + .5 - h) / h, dy = (y + .5 - h) / h;
-      const q = Math.hypot(dx, dy), i = (y * S + x) * 4;
-      if (q > 1) { d[i] = 128; d[i+1] = 128; d[i+2] = 255; d[i+3] = 0; continue; }
-      const k = .78;                                  // spłaszczona czasza, nie półkula
-      let nx = dx * k, ny = dy * k;
-      let nz = Math.sqrt(Math.max(.02, 1 - nx * nx - ny * ny));
-      const L = Math.sqrt(nx*nx + ny*ny + nz*nz); nx /= L; ny /= L; nz /= L;
-      d[i]   = (nx * .5 + .5) * 255;
-      d[i+1] = (-ny * .5 + .5) * 255;
-      d[i+2] = (nz * .5 + .5) * 255;
-      d[i+3] = q > .9 ? (1 - (q - .9) / .1) * 255 : 255;
-    }
-    g.putImageData(img, 0, 0);
-    return c;
-  }
-
-  function dropletMaps() {
-    const sprite = dropSprite();
-
-    const nc = document.createElement('canvas'); nc.width = TW; nc.height = TH;
-    const ng = nc.getContext('2d');
-    ng.fillStyle = '#8080ff'; ng.fillRect(0, 0, TW, TH);
-
-    const rc = document.createElement('canvas'); rc.width = TW; rc.height = TH;
-    const rg = rc.getContext('2d');
-    // lakier puszki: półmat z lekkim smugowaniem, żeby odbicie nie było idealne
-    rg.fillStyle = '#9c9c9c'; rg.fillRect(0, 0, TW, TH);
-    for (let i = 0; i < 260; i++) {
-      const x = Math.random() * TW, w = 8 + Math.random() * 60;
-      const lg = rg.createLinearGradient(x, 0, x + w, 0);
-      const v = Math.random() < .5 ? '#8d8d8d' : '#a9a9a9';
-      lg.addColorStop(0, 'rgba(0,0,0,0)'); lg.addColorStop(.5, v); lg.addColorStop(1, 'rgba(0,0,0,0)');
-      rg.fillStyle = lg; rg.fillRect(x, 0, w, TH);
-    }
-
-    for (const p of DROPS) {
-      ng.drawImage(sprite, p.x - p.r, p.y - p.r, p.r * 2, p.r * 2);
-      const d = rg.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.r);
-      d.addColorStop(0,   '#0d0d0d');
-      d.addColorStop(.76, '#232323');
-      d.addColorStop(1,   '#9c9c9c');
-      rg.fillStyle = d; rg.beginPath(); rg.arc(p.x, p.y, p.r, 0, 6.284); rg.fill();
-    }
-
-    const nt = new THREE.CanvasTexture(nc);
-    nt.wrapS = THREE.RepeatWrapping; nt.offset.x = .25; nt.anisotropy = 8;
-    const rt = new THREE.CanvasTexture(rc);
-    rt.wrapS = THREE.RepeatWrapping; rt.offset.x = .25; rt.anisotropy = 8;
-    return { normal: nt, rough: rt };
-  }
+  const dropNormal = dataTex('media/drops-normal.jpg');
+  const dropRough  = dataTex('media/drops-rough.jpg');
+  const dropAlpha  = dataTex('media/drops-alpha.jpg');
+  // mapa zawija się w obu osiach, więc można ją przewijać w dół bez szwu
+  [dropNormal, dropRough, dropAlpha].forEach(t => { t.wrapT = THREE.RepeatWrapping; });
 
   /* =========================================================
      3. Tekstura etykiety
@@ -257,16 +205,9 @@
       g.restore();
     }
 
-    // skropliny — te same pozycje co w mapie normalnych i chropowatości
+    // Krople NIE są wypalane w etykietę — spływają, więc mają własną
+    // przezroczystą warstwę wody na zewnątrz walca (patrz `water` niżej).
     g.letterSpacing = '0px';
-    for (const p of DROPS) {
-      const d = g.createRadialGradient(p.x - p.r * .34, p.y - p.r * .38, 0, p.x, p.y, p.r);
-      d.addColorStop(0,   'rgba(255,255,255,.42)');
-      d.addColorStop(.4,  'rgba(255,255,255,.05)');
-      d.addColorStop(.86, 'rgba(0,0,0,.13)');
-      d.addColorStop(1,   'rgba(255,255,255,.24)');
-      g.fillStyle = d; g.beginPath(); g.arc(p.x, p.y, p.r, 0, 6.284); g.fill();
-    }
 
     const tex = new THREE.CanvasTexture(c);
     tex.colorSpace = THREE.SRGBColorSpace;
@@ -597,16 +538,11 @@
 
   const labels = {};
   Object.keys(FLAVORS).forEach(k => { labels[k] = labelTexture(k); });
-  const drops = dropletMaps();
-
   const bodyMat = new THREE.MeshPhysicalMaterial({
     map: labels.cherry,
-    roughnessMap: drops.rough,
-    normalMap: drops.normal,
-    normalScale: new THREE.Vector2(.85, .85),
-    roughness: .62, metalness: .04,
-    clearcoat: 1, clearcoatRoughness: .06,
-    envMapIntensity: 1.25
+    roughness: .52, metalness: .04,
+    clearcoat: 1, clearcoatRoughness: .08,
+    envMapIntensity: 1.2
   });
   const body = new THREE.Mesh(
     new THREE.CylinderGeometry(R, R, TOP - BOT, 180, 1, true),
@@ -641,6 +577,60 @@
     [R*.808, BOT-.093   ], [R*.678, BOT-.100], [R*.50,  BOT-.082], [R*.28, BOT-.069],
     [0,      BOT-.067   ]
   ]), metalMat));
+
+  /* --- warstwa wody: cienka koszulka na korpusie, widoczna tylko tam,
+     gdzie alfa mówi „kropla". Przewija się w dół, więc całe zroszenie
+     powoli osiada. --------------------------------------------------- */
+  const waterMat = new THREE.MeshPhysicalMaterial({
+    color: 0xeaf2f7,
+    transparent: true, opacity: .34, depthWrite: false,
+    alphaMap: dropAlpha,
+    normalMap: dropNormal,
+    normalScale: new THREE.Vector2(1.15, 1.15),
+    roughnessMap: dropRough,
+    roughness: .06, metalness: 0,
+    clearcoat: 1, clearcoatRoughness: .02,
+    envMapIntensity: 3.2
+  });
+  const water = new THREE.Mesh(
+    new THREE.CylinderGeometry(R * 1.004, R * 1.004, TOP - BOT, 180, 1, true),
+    waterMat
+  );
+  can.add(water);
+
+  /* --- pojedyncze krople, które naprawdę zbiegają po puszce ---------- */
+  // Kropla biegnąca musi być wyraźnie większa od zroszenia, inaczej ginie
+  // w polu skroplin. Smuga jest ciemniejsza i bardziej lustrzana — czyta się
+  // jako mokry ślad zmywający szron, a nie jako biała kreska.
+  const dropMat = new THREE.MeshPhysicalMaterial({
+    color: 0xf4f9fd, transparent: true, opacity: .78, depthWrite: false,
+    roughness: .01, metalness: 0,
+    clearcoat: 1, clearcoatRoughness: .01, envMapIntensity: 5
+  });
+  const trailMat = new THREE.MeshPhysicalMaterial({
+    color: 0xa8c2d2, transparent: true, opacity: .58, depthWrite: false,
+    roughness: .02, metalness: 0,
+    clearcoat: 1, clearcoatRoughness: .02, envMapIntensity: 4
+  });
+
+  const RUNNERS = [];
+  for (let i = 0; i < 9; i++) {
+    const g = new THREE.Group();                 // obrót grupy = kąt na obwodzie
+    const head = new THREE.Mesh(SPHERE, dropMat);
+    head.position.z = R * 1.016;
+    head.scale.set(.04, .058, .018);
+    g.add(head);
+
+    const tail = new THREE.Mesh(SPHERE, trailMat);
+    tail.position.set(0, .085, R * 1.011);
+    tail.scale.set(.015, .085, .009);
+    g.add(tail);
+
+    g.rotation.y = Math.random() * 6.284;
+    g.position.y = BOT + Math.random() * (TOP - BOT);
+    can.add(g);
+    RUNNERS.push({ g, head, tail, sp: .09 + Math.random() * .16, wait: Math.random() * 4 });
+  }
 
   // tarcza wieczka z rowkiem i zawleczką, tuż nad płaskim dnem lathe'a
   const lid = new THREE.Mesh(new THREE.CircleGeometry(R * .70, 72), lidMat);
@@ -766,6 +756,29 @@
     can.position.y = Math.sin(now / 1400) * .05 - state.scroll * 1.1;
     can.scale.setScalar(0.63 * (1 + state.scroll * .12));
 
+    // całe zroszenie powoli osiada w dół
+    const slide = dt * .025;
+    dropNormal.offset.y -= slide;
+    dropRough.offset.y  -= slide;
+    dropAlpha.offset.y  -= slide;
+
+    // krople biegnące: przyspieszają, po zejściu na dół czekają i wracają
+    RUNNERS.forEach(r => {
+      if (r.wait > 0) { r.wait -= dt; r.g.visible = false; return; }
+      r.g.visible = true;
+      r.sp += dt * .06;                                  // grawitacja
+      r.g.position.y -= r.sp * dt * 2.2;
+      const run = Math.min(1, (TOP - r.g.position.y) / (TOP - BOT));
+      r.tail.scale.y = .03 + run * .26;                  // smuga rośnie za kroplą
+      r.tail.position.y = r.tail.scale.y * 1.05;
+      if (r.g.position.y < BOT - .05) {
+        r.g.position.y = TOP - .02;
+        r.g.rotation.y = Math.random() * 6.284;
+        r.sp = .09 + Math.random() * .16;
+        r.wait = Math.random() * 3.5;
+      }
+    });
+
     orbit.rotation.y = auto * .35 + state.yaw * .5;
     orbit.position.y = -state.scroll * .7;
 
@@ -802,14 +815,12 @@
     requestAnimationFrame(frame);
   }
 
-  if (document.fonts && document.fonts.ready) {
-    document.fonts.ready.then(() => {
-      Object.keys(FLAVORS).forEach(k => { labels[k].dispose(); labels[k] = labelTexture(k); });
-      bodyMat.map = labels[document.body.dataset.flavor] || labels.cherry;
-      bodyMat.needsUpdate = true;
-      mount();
-    });
-  } else {
-    mount();
+  function rebuildLabels() {
+    Object.keys(FLAVORS).forEach(k => { labels[k].dispose(); labels[k] = labelTexture(k); });
+    bodyMat.map = labels[active] || labels.cherry;
+    bodyMat.needsUpdate = true;
   }
+
+  const waitFonts = (document.fonts && document.fonts.ready) || Promise.resolve();
+  waitFonts.then(() => { rebuildLabels(); mount(); });
 })();
