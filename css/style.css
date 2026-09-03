@@ -133,6 +133,12 @@ button{ font:inherit; color:inherit; background:none; border:0; cursor:pointer; 
 }
 @keyframes breathe{ 0%,100%{ transform:scale(1); opacity:.75 } 50%{ transform:scale(1.09); opacity:1 } }
 
+/* bąbelki: płótno 2D między poświatą tła a puszką */
+.hero__bubbles{
+  position:absolute; inset:0; z-index:1;
+  pointer-events:none;
+}
+
 /* podpis pionowy przy lewej krawędzi — zastępuje wielki skrypt za puszką */
 .hero__edge{
   position:absolute; z-index:3; top:50%;

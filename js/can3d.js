@@ -834,14 +834,20 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 
     // rant i wieczko w miejsce odciętej kopuły; wysokości są bezwzględne,
     // dobrane do miejsca cięcia modelu (v = 0.963 wypada na y ≈ 0.849)
+    // Rant DOMYKA SIĘ do osi. Wcześniej kończył się otworem, a tarcza wieczka
+    // leżała pod nim z małym odstępem — pod kątem prześwitywał przez to ciemny
+    // pierścień, czyli szpara przy górnej krawędzi.
     const cap = new THREE.Mesh(lathe([
       [R*.803, .849], [R*.815, .858], [R*.838, .868], [R*.846, .877],
-      [R*.843, .886], [R*.815, .891], [R*.790, .883], [R*.780, .8705]
+      [R*.843, .886], [R*.815, .891], [R*.790, .883], [R*.780, .8700],
+      [R*.42,  .8680], [0, .8676]
     ]), metalMat);
     can.add(cap);
 
-    lid.position.y = .8685;
-    lid.scale.setScalar(.79 / .74);   // tarcza wieczka pod wewnętrzną krawędź rantu
+    // tarcza leży odrobinę NAD dnem rantu i jest od niego szersza, więc jej
+    // krawędź chowa się w metalu zamiast zostawiać prześwit
+    lid.position.y = .8712;
+    lid.scale.setScalar(.79 / .74);
     lid.visible = true;
     can.add(lid);                     // zabieramy ją z ukrytej grupy zapasowej
     canLoaded();
