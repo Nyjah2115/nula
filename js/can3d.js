@@ -788,6 +788,9 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
     geo.addGroup(label.length, metal.length, 1);
   }
 
+  let canLoaded;
+  const canReady = new Promise(r => { canLoaded = r; });
+
   new GLTFLoader().load('media/models/can.glb', gltf => {
     let src = null;
     gltf.scene.traverse(o => { if (o.isMesh && !src) src = o; });
@@ -833,7 +836,8 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
     lid.scale.setScalar(.79 / .74);   // tarcza wieczka pod wewnętrzną krawędź rantu
     lid.visible = true;
     can.add(lid);                     // zabieramy ją z ukrytej grupy zapasowej
-  }, undefined, () => { /* bez modelu zostaje bryła proceduralna */ });
+    canLoaded();
+  }, undefined, () => { canLoaded(); });   // bez modelu zostaje bryła proceduralna
 
   can.rotation.z = -0.26;
   can.rotation.x =  0.06;
@@ -1066,7 +1070,12 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
     const cam = new THREE.OrthographicCamera(-half, half, half, -half, -20, 20);
     cam.position.set(0, 0, 5); cam.lookAt(0, 0, 0);
 
-    const rt = new THREE.WebGLRenderTarget(size, size);
+    return offscreen(sc, cam, size, size);
+  }
+
+  /* --- render sceny do canvasa poza ekranem ------------------------- */
+  function offscreen(sc, cam, w, h) {
+    const rt = new THREE.WebGLRenderTarget(w, h);
     const prevTarget = renderer.getRenderTarget();
     const prevColor = new THREE.Color();
     renderer.getClearColor(prevColor);
@@ -1077,24 +1086,22 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
     renderer.clear(true, true, true);
     renderer.render(sc, cam);
 
-    const buf = new Uint8Array(size * size * 4);
-    renderer.readRenderTargetPixels(rt, 0, 0, size, size, buf);
+    const buf = new Uint8Array(w * h * 4);
+    renderer.readRenderTargetPixels(rt, 0, 0, w, h, buf);
     renderer.setRenderTarget(prevTarget);
     renderer.setClearColor(prevColor, prevAlpha);
     rt.dispose();
 
     const c = document.createElement('canvas');
-    c.width = c.height = size;
+    c.width = w; c.height = h;
     const g = c.getContext('2d');
-    const img = g.createImageData(size, size);
-    for (let y = 0; y < size; y++) {
-      // czytanie z bufora idzie od DOŁU obrazu, canvas liczy od góry
-      const src = (size - 1 - y) * size * 4;
-      for (let x = 0; x < size; x++) {
-        const i = src + x * 4, o = (y * size + x) * 4;
+    const img = g.createImageData(w, h);
+    for (let y = 0; y < h; y++) {
+      const src = (h - 1 - y) * w * 4;      // bufor idzie od dołu, canvas od góry
+      for (let x = 0; x < w; x++) {
+        const i = src + x * 4, o = (y * w + x) * 4;
         const a = buf[i + 3];
-        // bufor jest premnożony przez alfę, ImageData oczekuje niepremnożonego
-        const un = a ? 255 / a : 0;
+        const un = a ? 255 / a : 0;         // bufor jest premnożony przez alfę
         img.data[o]     = Math.min(255, buf[i]     * un);
         img.data[o + 1] = Math.min(255, buf[i + 1] * un);
         img.data[o + 2] = Math.min(255, buf[i + 2] * un);
@@ -1103,6 +1110,49 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
     }
     g.putImageData(img, 0, 0);
     return c;
+  }
+
+  /* --- miniatury w kafelkach: ta sama bryła i ta sama etykieta, co w hero.
+     Zamiast trzech osobnych scen podmieniam etykietę na materiale, renderuję
+     puszkę w ustalonej pozie i przywracam stan — dzięki temu kafelek nie może
+     rozjechać się z tym, co widać na środku strony. -------------------- */
+  function paintChips() {
+    const chips = document.querySelectorAll('.chip img');
+    if (!chips.length) return;
+
+    const W = 360, H = 470;
+    // Kadr liczony pod wysokość puszki: przy fov 24° i tej odległości
+    // zajmuje ~90% wysokości renderu, zamiast tonąć w pustym tle.
+    const cam = new THREE.PerspectiveCamera(24, W / H, .1, 100);
+    cam.position.set(0, .03, 3.1);
+    cam.lookAt(0, .03, 0);
+
+    const keep = {
+      map: bodyMat.map,
+      rot: can.rotation.clone(),
+      pos: can.position.clone(),
+      scl: can.scale.clone(),
+      orbit: orbit.visible
+    };
+    orbit.visible = false;                 // owoce nie wchodzą do kafelka
+    can.rotation.set(.05, .38, -.14);
+    can.position.set(0, 0, 0);
+    can.scale.setScalar(.63);
+
+    chips.forEach(img => {
+      const key = img.closest('.chip').dataset.flavor;
+      if (!labels[key]) return;
+      bodyMat.map = labels[key];
+      bodyMat.needsUpdate = true;
+      img.src = offscreen(scene, cam, W, H).toDataURL('image/png');
+      img.classList.add('is-model');
+    });
+
+    bodyMat.map = keep.map; bodyMat.needsUpdate = true;
+    can.rotation.copy(keep.rot);
+    can.position.copy(keep.pos);
+    can.scale.copy(keep.scl);
+    orbit.visible = keep.orbit;
   }
 
   function buildSprites(BUILD) {
@@ -1122,9 +1172,10 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 
   // owoce dojeżdżają osobno — puszka nie czeka na kilka megabajtów siatek,
   // a gdy już są, wracamy do etykiety i wklejamy w nią render owocu
-  Promise.all([waitFonts, loadModels()]).then(([, BUILD]) => {
+  Promise.all([waitFonts, loadModels(), canReady]).then(([, BUILD]) => {
     populateFruit(BUILD);
     buildSprites(BUILD);
     rebuildLabels();
+    paintChips();
   });
 })();
