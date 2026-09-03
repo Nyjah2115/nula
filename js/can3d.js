@@ -668,6 +668,13 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
     anisotropy: .5, envMapIntensity: 2.1
   });
 
+  // Tarcza wieczka. Bez niej puszka jest otwartą rurą — widać przez nią
+  // wnętrze. Startuje w bryle zapasowej, a po wczytaniu modelu przenosi się
+  // na jego rant.
+  const lid = new THREE.Mesh(new THREE.CircleGeometry(R * .74, 72), lidMat);
+  lid.rotation.x = -Math.PI / 2;
+  lid.position.y = TOP + .1478;
+
   const lathe = (pts) => new THREE.LatheGeometry(
     pts.map(p => new THREE.Vector2(p[0], p[1])), 180
   );
@@ -684,6 +691,7 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
   ]), metalMat));
 
   // denko: zaokrąglenie na dolnych ~4% wysokości, potem kopuła do środka
+  shell.add(lid);
   shell.add(new THREE.Mesh(lathe([
     [R,      BOT       ], [R*.995, BOT-.020], [R*.965, BOT-.042], [R*.905, BOT-.060],
     [R*.830, BOT-.072  ], [R*.800, BOT-.078], [R*.700, BOT-.070], [R*.45,  BOT-.048],
@@ -837,7 +845,13 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
     lid.visible = true;
     can.add(lid);                     // zabieramy ją z ukrytej grupy zapasowej
     canLoaded();
-  }, undefined, () => { canLoaded(); });   // bez modelu zostaje bryła proceduralna
+  }, undefined, err => {
+    // GLTFLoader opakowuje onLoad w try/catch i kieruje wyjątek TUTAJ, więc
+    // bez tego logu błąd w składaniu puszki przepada bez śladu.
+    console.warn('Puszka z modelu nie została złożona, zostaje bryła zapasowa:', err);
+    shell.visible = true;
+    canLoaded();
+  });
 
   can.rotation.z = -0.26;
   can.rotation.x =  0.06;
