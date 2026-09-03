@@ -239,12 +239,7 @@ button{ font:inherit; color:inherit; background:none; border:0; cursor:pointer; 
   display:flex; align-items:flex-end; justify-content:space-between;
   gap:clamp(16px,2.4vw,34px);
 }
-.picker__box{ display:flex; flex-direction:column; gap:12px; }
-.picker__label{
-  margin:0;
-  font-size:10.5px; font-weight:600;
-  letter-spacing:.24em; text-transform:uppercase; color:var(--muted);
-}
+.picker__box{ display:flex; }
 .picker__row{ display:flex; gap:clamp(8px,1vw,14px); }
 
 /* Puszka stoi sama, bez pudełka — zostaje tylko podpis pod spodem.
@@ -270,7 +265,7 @@ button{ font:inherit; color:inherit; background:none; border:0; cursor:pointer; 
   left:50%; top:6px; width:150%; height:132px;
   transform:translateX(-50%) scale(.72);
   background:radial-gradient(50% 50% at 50% 52%, var(--chipColor), transparent 68%);
-  opacity:0; pointer-events:none;
+  opacity:.12; pointer-events:none;
   transition:opacity .55s var(--ease), transform .55s var(--ease);
 }
 
@@ -286,20 +281,20 @@ button{ font:inherit; color:inherit; background:none; border:0; cursor:pointer; 
   object-fit:contain;
   transition:transform .6s var(--ease), filter .6s var(--ease);
 }
-.chip__shot img.is-model{ filter:drop-shadow(0 12px 18px rgba(0,0,0,.5)); }
+.chip__shot img.is-model{ filter:drop-shadow(0 10px 16px rgba(0,0,0,.35)); }
 
 .chip__meta{
   grid-area:meta;
   display:flex; flex-direction:column; gap:3px;
   padding-bottom:6px;
-  border-bottom:1px solid var(--line);
+  border-bottom:1px solid rgba(255,255,255,.3);
   transition:border-color .45s var(--ease);
 }
 .chip__meta strong{
   font-size:14.5px; font-weight:600;
-  color:var(--muted); transition:color .45s var(--ease);
+  color:rgba(255,255,255,.86); transition:color .45s var(--ease);
 }
-.chip__meta em{ font-style:normal; font-size:11.5px; color:rgba(255,255,255,.4); }
+.chip__meta em{ font-style:normal; font-size:11.5px; color:rgba(255,255,255,.55); }
 
 .chip__go{
   grid-area:go; align-self:end; justify-self:end;
@@ -316,7 +311,7 @@ button{ font:inherit; color:inherit; background:none; border:0; cursor:pointer; 
 .chip:hover .chip__wash{ opacity:.4; transform:translateX(-50%) scale(1); }
 .chip:hover .chip__shot img{
   transform:translateY(-7px) scale(1.12) rotate(-5deg);
-  filter:drop-shadow(0 22px 26px rgba(0,0,0,.6));
+  filter:drop-shadow(0 20px 24px rgba(0,0,0,.45));
 }
 .chip:hover .chip__meta{ border-color:rgba(255,255,255,.65); }
 .chip:hover .chip__meta strong{ color:#fff; }

@@ -1134,6 +1134,11 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
       scl: can.scale.clone(),
       orbit: orbit.visible
     };
+    // Kafelek jest mały i leży na ciemnym tle, więc render z ekspozycją sceny
+    // wychodzi przygaszony. Na czas miniatur podbijam ją i zaraz przywracam.
+    const prevExposure = renderer.toneMappingExposure;
+    renderer.toneMappingExposure = 1.5;
+
     orbit.visible = false;                 // owoce nie wchodzą do kafelka
     can.rotation.set(.05, .38, -.14);
     can.position.set(0, 0, 0);
@@ -1148,6 +1153,7 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
       img.classList.add('is-model');
     });
 
+    renderer.toneMappingExposure = prevExposure;
     bodyMat.map = keep.map; bodyMat.needsUpdate = true;
     can.rotation.copy(keep.rot);
     can.position.copy(keep.pos);
