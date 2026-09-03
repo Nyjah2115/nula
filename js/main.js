@@ -43,12 +43,22 @@
     if (window.NULA3D) window.NULA3D.setFlavor(name);   // model 3D, jeśli wystartował
     chips.forEach(c => c.classList.toggle('is-on', c.dataset.flavor === name));
 
-    // tekst wymieniamy w połowie przenikania, żeby nie migał
-    Object.entries(slots).forEach(([key, el]) => {
+    // Teksty schodzą i wracają z lekkim przesunięciem względem siebie, żeby
+    // wymiana nie wyglądała jak jedno mrugnięcie całej kolumny. Czas dobrany
+    // pod przejście palety, które trwa około sekundy.
+    Object.entries(slots).forEach(([key, el], i) => {
       if (!el || !COPY[name]) return;
-      el.style.transition = 'opacity .28s ease';
-      el.style.opacity = '0';
-      setTimeout(() => { el.textContent = COPY[name][key]; el.style.opacity = '1'; }, 280);
+      const lag = i * 55;
+      el.style.transition = 'opacity .34s ease, transform .34s ease';
+      setTimeout(() => {
+        el.style.opacity = '0';
+        el.style.transform = 'translateY(4px)';
+      }, lag);
+      setTimeout(() => {
+        el.textContent = COPY[name][key];
+        el.style.opacity = '1';
+        el.style.transform = 'none';
+      }, lag + 340);
     });
   }
 

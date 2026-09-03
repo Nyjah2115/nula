@@ -978,14 +978,32 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 
   /* --- zmiana smaku --------------------------------------- */
   let active = 'cherry';
+
+  // Płynność przejścia psuły trzy rzeczy naraz i każda leczy się inaczej:
+  //  – etykieta podmieniała się po stałych 320 ms, bez związku z tym, gdzie
+  //    faktycznie jest front puszki, więc przy wolniejszym obrocie dało się
+  //    złapać cięcie; teraz decyduje przebyty KĄT, z zapasem czasowym,
+  //  – kolor poświaty skakał jednym przypisaniem; teraz jedzie po smoothstep,
+  //  – zamach dokładał całą prędkość w jednej klatce; teraz rozkłada się
+  //    na ułamek sekundy, więc start jest miękki.
+  let pendingLabel = null, swapAtAngle = 0, swapDeadline = 0;
+  let impulse = 0;
+  const glowFrom = new THREE.Color(), glowTo = new THREE.Color();
+  let glowT = 1;
+
   function setFlavor(name) {
     const f = FLAVORS[name];
     if (!f || name === active) return;
     active = name;
-    state.vel += 16;                 // zamach na mniej więcej pełny obrót
-    glow.color.setHex(f.glow);
-    // etykieta zmienia się w połowie obrotu, kiedy jest odwrócona tyłem
-    setTimeout(() => { bodyMat.map = labels[name]; bodyMat.needsUpdate = true; }, 320);
+
+    impulse = 13;
+    glowFrom.copy(glow.color);
+    glowTo.setHex(f.glow);
+    glowT = 0;
+
+    pendingLabel = name;
+    swapAtAngle  = state.angle + Math.PI * .85;   // gdy front odjedzie w tył
+    swapDeadline = performance.now() + 1400;      // awaryjnie, gdyby ktoś przytrzymał
   }
   window.NULA3D = { setFlavor, can, camera, scene };   // przydatne przy podglądzie bryły
 
@@ -1009,6 +1027,28 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
   let t0 = performance.now();
   function frame(now) {
     const dt = Math.min(.05, (now - t0) / 1000); t0 = now;
+
+    // zamach rozłożony na kilka klatek zamiast skoku prędkości
+    if (impulse > 0) {
+      const take = Math.min(impulse, 70 * dt);
+      state.vel += take;
+      impulse   -= take;
+    }
+
+    // poświata przechodzi łagodnie, a nie jednym przypisaniem
+    if (glowT < 1) {
+      glowT = Math.min(1, glowT + dt / .95);
+      const e = glowT * glowT * (3 - 2 * glowT);
+      glow.color.copy(glowFrom).lerp(glowTo, e);
+    }
+
+    // etykieta zmienia się dopiero, gdy front jest odwrócony
+    if (pendingLabel &&
+        (state.angle >= swapAtAngle || now > swapDeadline)) {
+      bodyMat.map = labels[pendingLabel];
+      bodyMat.needsUpdate = true;
+      pendingLabel = null;
+    }
 
     if (!state.drag) {
       state.angle += state.vel * dt;
@@ -1038,7 +1078,7 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
     // komplet owoców aktywnego smaku wyrasta, pozostałe znikają
     for (const k in grow) {
       const target = k === active ? 1 : 0;
-      grow[k] += (target - grow[k]) * Math.min(1, dt * 5.5);
+      grow[k] += (target - grow[k]) * Math.min(1, dt * 3.2);
     }
 
     props.forEach(p => {
