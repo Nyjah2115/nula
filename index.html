@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>NULA — orzeźwiająco czysty napój gazowany, zero cukru</title>
+<meta name="description" content="NULA to napój gazowany bez cukru i bez kalorii. Trzy smaki: wiśnia, jagoda, limonka. Woda, bąbelki, owoc — nic więcej.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Yellowtail&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css?v=11">
+</head>
+<body data-flavor="cherry">
+
+<div class="grain" aria-hidden="true"></div>
+
+<header class="topbar">
+  <a class="brand" href="#top">
+    <span class="brand__mark" aria-hidden="true"></span>
+    <span class="brand__name">NULA</span>
+  </a>
+
+  <nav class="pill" aria-label="Nawigacja">
+    <span class="pill__thumb" aria-hidden="true"></span>
+    <a href="#top" class="is-active">Smaki</a>
+    <a href="#sklad">Skład</a>
+    <a href="#zero">Zero</a>
+    <a href="#sklep">Sklep</a>
+  </nav>
+
+  <a class="topbar__cart" href="#sklep">
+    <span>Kup zestaw</span>
+    <em>0</em>
+  </a>
+</header>
+
+<main id="top">
+
+  <!-- ============ HERO ============ -->
+  <section class="hero" id="hero">
+    <div class="hero__sky" aria-hidden="true"></div>
+
+    <h2 class="hero__script" aria-hidden="true">
+      <span>Orzeźwiająco</span>
+      <span>Czysty</span>
+    </h2>
+
+    <div class="hero__cans" aria-hidden="true">
+      <img class="can is-on" data-flavor="cherry"    src="media/can-cherry.png"    alt="">
+      <img class="can"       data-flavor="blueberry" src="media/can-blueberry.png" alt="">
+      <img class="can"       data-flavor="lime"      src="media/can-lime.png"      alt="">
+    </div>
+
+    <div class="hero__grid">
+
+      <div class="lede">
+        <h1 class="lede__title">Czyste<br>Zero</h1>
+        <p class="lede__text" data-copy="text">
+          Bąbelki, zimna woda źródlana i wyciśnięty owoc. Bez cukru,
+          bez słodzików, bez barwników — 0&nbsp;kcal w każdej puszce.
+        </p>
+        <a class="lede__cta" href="#sklep">
+          <span>Poznaj smak</span>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h15m0 0-6-6m6 6-6 6"/></svg>
+        </a>
+      </div>
+
+      <div class="rail">
+        <p class="rail__label">Wybierz smak</p>
+
+        <button class="chip is-on" data-flavor="cherry" type="button">
+          <span class="chip__shot"><img src="media/thumb-cherry.png" alt="Puszka NULA o smaku wiśniowym"></span>
+          <span class="chip__meta">
+            <strong>Wiśnia</strong>
+            <em>0 kcal · 330 ml</em>
+          </span>
+        </button>
+
+        <button class="chip" data-flavor="blueberry" type="button">
+          <span class="chip__shot"><img src="media/thumb-blueberry.png" alt="Puszka NULA o smaku jagodowym"></span>
+          <span class="chip__meta">
+            <strong>Jagoda</strong>
+            <em>0 kcal · 330 ml</em>
+          </span>
+        </button>
+
+        <button class="chip" data-flavor="lime" type="button">
+          <span class="chip__shot"><img src="media/thumb-lime.png" alt="Puszka NULA o smaku limonkowym"></span>
+          <span class="chip__meta">
+            <strong>Limonka</strong>
+            <em>0 kcal · 330 ml</em>
+          </span>
+        </button>
+      </div>
+
+    </div>
+
+    <div class="hero__foot">
+      <span class="scrollhint"><i aria-hidden="true"></i> Przewiń</span>
+      <p class="ticker" data-copy="note">330 ml · 0 g cukru · 0 kcal · bez konserwantów</p>
+    </div>
+  </section>
+
+  <!-- ============ SMAKI ============ -->
+  <section class="flavors" id="smaki">
+    <div class="wrap">
+      <p class="eyebrow">Trzy smaki</p>
+      <h2 class="head">Zero kompromisów<br><em>w każdym łyku</em></h2>
+
+      <div class="cards">
+        <article class="card" data-flavor="cherry">
+          <div class="card__art"><img src="media/thumb-cherry.png" alt="Puszka NULA Wiśnia"></div>
+          <h3>Wiśnia</h3>
+          <p>Ciemna, dojrzała wiśnia z lekką kwasowością na finiszu. Najgłębszy z całej trójki.</p>
+          <dl>
+            <div><dt>Kalorie</dt><dd>0 kcal</dd></div>
+            <div><dt>Cukier</dt><dd>0 g</dd></div>
+            <div><dt>Sok</dt><dd>4%</dd></div>
+          </dl>
+        </article>
+
+        <article class="card" data-flavor="blueberry">
+          <div class="card__art"><img src="media/thumb-blueberry.png" alt="Puszka NULA Jagoda"></div>
+          <h3>Jagoda</h3>
+          <p>Leśna jagoda i chłodny nos. Okrągły, spokojny smak, który nie zostawia posmaku.</p>
+          <dl>
+            <div><dt>Kalorie</dt><dd>0 kcal</dd></div>
+            <div><dt>Cukier</dt><dd>0 g</dd></div>
+            <div><dt>Sok</dt><dd>3%</dd></div>
+          </dl>
+        </article>
+
+        <article class="card" data-flavor="lime">
+          <div class="card__art"><img src="media/thumb-lime.png" alt="Puszka NULA Limonka"></div>
+          <h3>Limonka</h3>
+          <p>Ostry, cytrusowy start i mocne bąbelki. Ten, po który sięgasz w upał.</p>
+          <dl>
+            <div><dt>Kalorie</dt><dd>0 kcal</dd></div>
+            <div><dt>Cukier</dt><dd>0 g</dd></div>
+            <div><dt>Sok</dt><dd>5%</dd></div>
+          </dl>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ ZERO ============ -->
+  <section class="zero" id="zero">
+    <div class="wrap">
+      <p class="eyebrow">Dlaczego NULA</p>
+      <h2 class="head">Cztery razy nic<br><em>i jedna rzecz</em></h2>
+
+      <ul class="zeros">
+        <li><span class="zeros__n" data-count="0">0</span><span class="zeros__l">gramów cukru</span></li>
+        <li><span class="zeros__n" data-count="0">0</span><span class="zeros__l">kalorii</span></li>
+        <li><span class="zeros__n" data-count="0">0</span><span class="zeros__l">konserwantów</span></li>
+        <li><span class="zeros__n" data-count="0">0</span><span class="zeros__l">sztucznych barwników</span></li>
+        <li class="is-one"><span class="zeros__n" data-count="1">1</span><span class="zeros__l">wyciśnięty owoc</span></li>
+      </ul>
+
+      <p class="zero__note">
+        Słodycz w NULI bierze się wyłącznie z owocu — dlatego nie da się jej
+        podkręcić i dlatego każda puszka smakuje tak samo od pierwszej partii.
+      </p>
+    </div>
+  </section>
+
+  <!-- ============ SKŁAD ============ -->
+  <section class="specs" id="sklad">
+    <div class="wrap specs__grid">
+      <div>
+        <p class="eyebrow">Skład</p>
+        <h2 class="head">Cztery linijki<br><em>na etykiecie</em></h2>
+        <p class="specs__lead">
+          Etykieta NULI mieści się w jednym zdaniu, bo nie ma w niej nic,
+          czego nie dałoby się wypowiedzieć na głos.
+        </p>
+      </div>
+
+      <table class="table">
+        <caption class="visually-hidden">Wartości odżywcze w 100 ml</caption>
+        <thead><tr><th scope="col">W 100 ml</th><th scope="col">Wartość</th></tr></thead>
+        <tbody>
+          <tr><th scope="row">Wartość energetyczna</th><td>0 kJ / 0 kcal</td></tr>
+          <tr><th scope="row">Węglowodany</th><td>0 g</td></tr>
+          <tr><th scope="row">w tym cukry</th><td>0 g</td></tr>
+          <tr><th scope="row">Białko</th><td>0 g</td></tr>
+          <tr><th scope="row">Sól</th><td>0,01 g</td></tr>
+          <tr><th scope="row">Sok owocowy</th><td>3–5%</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ============ SKLEP ============ -->
+  <section class="shop" id="sklep">
+    <div class="wrap shop__inner">
+      <p class="eyebrow">Zestawy</p>
+      <h2 class="head">Weź całą trójkę<br><em>i wybierz swoją</em></h2>
+
+      <div class="packs">
+        <article class="pack">
+          <h3>Próbnik</h3>
+          <p class="pack__q">6 puszek · po 2 z każdego smaku</p>
+          <p class="pack__p">29 zł</p>
+          <a class="btn" href="#">Do koszyka</a>
+        </article>
+        <article class="pack pack--hot">
+          <span class="pack__tag">Najczęściej wybierany</span>
+          <h3>Zestaw 12</h3>
+          <p class="pack__q">12 puszek · smak do wyboru</p>
+          <p class="pack__p">52 zł</p>
+          <a class="btn btn--solid" href="#">Do koszyka</a>
+        </article>
+        <article class="pack">
+          <h3>Subskrypcja</h3>
+          <p class="pack__q">24 puszki co miesiąc · –15%</p>
+          <p class="pack__p">88 zł<span>/mies.</span></p>
+          <a class="btn" href="#">Zamawiam</a>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <footer class="foot">
+    <div class="wrap foot__inner">
+      <span class="brand brand--foot"><span class="brand__mark" aria-hidden="true"></span><span class="brand__name">NULA</span></span>
+      <p>Strona pokazowa. NULA jest marką fikcyjną, stworzoną wyłącznie na potrzeby portfolio.</p>
+      <p class="foot__by">Projekt i kod — Dawid Tomczyk</p>
+    </div>
+  </footer>
+
+</main>
+
+<script src="js/three.min.js"></script>
+<script src="js/can3d.js?v=7"></script>
+<script src="js/main.js?v=3"></script>
+</body>
+</html>
