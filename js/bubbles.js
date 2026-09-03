@@ -12,22 +12,24 @@
 (() => {
   'use strict';
 
-  const hero = document.querySelector('.hero');
+  const hero    = document.querySelector('.hero');
+  const flavors = document.querySelector('.flavors');
   if (!hero) return;
   if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
 
   const canvas = document.createElement('canvas');
   canvas.className = 'hero__bubbles';
   canvas.setAttribute('aria-hidden', 'true');
-  hero.appendChild(canvas);
+  // płótno towarzyszy całej sekwencji, nie tylko hero
+  document.body.appendChild(canvas);
 
   const g = canvas.getContext('2d');
   const dpr = Math.min(window.devicePixelRatio || 1, 2);
   let w = 0, h = 0;
 
   function size() {
-    w = hero.clientWidth;
-    h = hero.clientHeight;
+    w = window.innerWidth;
+    h = window.innerHeight;
     canvas.width  = Math.round(w * dpr);
     canvas.height = Math.round(h * dpr);
     canvas.style.width  = w + 'px';
@@ -62,20 +64,46 @@
     bubbles.push(b);
   }
 
-  window.addEventListener('resize', size);
+  window.addEventListener('resize', () => { size(); trackStage(); });
 
-  let visible = true;
-  if ('IntersectionObserver' in window) {
-    new IntersectionObserver(([e]) => { visible = e.isIntersecting; })
-      .observe(hero);
+  // Bąbelki towarzyszą sekwencji i gasną razem z puszką, żeby nie unosiły się
+  // nad sekcjami, które są już zwykłą treścią.
+  let fade = 1;
+  function trackStage() {
+    if (!flavors) return;
+    const r = flavors.getBoundingClientRect();
+    const end = Math.max(1, r.bottom + window.scrollY - h * .55);
+    const p = Math.min(1, Math.max(0, window.scrollY / end));
+    fade = 1 - Math.min(1, Math.max(0, (p - .82) / .18));
+    canvas.style.opacity = String(fade);
   }
+  document.addEventListener('scroll', trackStage, { passive: true });
+  trackStage();
+
+  // barwa bąbelków idzie za smakiem — czytana z palety strony, nie zaszyta
+  let tint = [255, 255, 255], tintTick = 0;
+  function readTint() {
+    const v = getComputedStyle(document.body).getPropertyValue('--glow').trim();
+    const m = /^#([0-9a-f]{6})$/i.exec(v);
+    if (!m) return;
+    const n = parseInt(m[1], 16);
+    // 60% bieli, 40% koloru smaku — inaczej bąbelki robią się kolorowymi kulkami
+    tint = [
+      Math.round(255 * .6 + ((n >> 16) & 255) * .4),
+      Math.round(255 * .6 + ((n >> 8)  & 255) * .4),
+      Math.round(255 * .6 + ( n        & 255) * .4)
+    ];
+  }
+  readTint();
 
   let t0 = performance.now();
   function frame(now) {
     const dt = Math.min(.05, (now - t0) / 1000);
     t0 = now;
 
-    if (visible) {
+    if (fade > .01) {
+      if (++tintTick % 30 === 0) readTint();
+      const [tr, tg, tb] = tint;
       g.clearRect(0, 0, w, h);
 
       for (const b of bubbles) {
@@ -86,17 +114,17 @@
 
         // sam pierścień — środek zostaje pusty, jak w prawdziwym bąbelku
         const ring = g.createRadialGradient(x, b.y, b.r * .15, x, b.y, b.r);
-        ring.addColorStop(0,   `rgba(255,255,255,${b.alpha * .07})`);
-        ring.addColorStop(.55, `rgba(255,255,255,${b.alpha * .16})`);
-        ring.addColorStop(.88, `rgba(255,255,255,${b.alpha})`);
-        ring.addColorStop(.97, `rgba(255,255,255,${b.alpha * .8})`);
-        ring.addColorStop(1,   'rgba(255,255,255,0)');
+        ring.addColorStop(0,   `rgba(${tr},${tg},${tb},${b.alpha * .07})`);
+        ring.addColorStop(.55, `rgba(${tr},${tg},${tb},${b.alpha * .16})`);
+        ring.addColorStop(.88, `rgba(${tr},${tg},${tb},${b.alpha})`);
+        ring.addColorStop(.97, `rgba(${tr},${tg},${tb},${b.alpha * .8})`);
+        ring.addColorStop(1,   `rgba(${tr},${tg},${tb},0)`);
         g.fillStyle = ring;
         g.beginPath(); g.arc(x, b.y, b.r, 0, 6.283); g.fill();
 
         // punktowy refleks u góry po lewej
         if (b.r > 7) {
-          g.fillStyle = `rgba(255,255,255,${b.alpha * .85})`;
+          g.fillStyle = `rgba(${tr},${tg},${tb},${b.alpha * .85})`;
           g.beginPath();
           g.arc(x - b.r * .33, b.y - b.r * .36, Math.max(.7, b.r * .12), 0, 6.283);
           g.fill();
