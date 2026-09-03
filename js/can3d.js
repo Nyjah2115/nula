@@ -29,15 +29,15 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
   const FLAVORS = {
     cherry: {
       name:'Wiśnia', base:'#0f8f60', deep:'#03301f', light:'#1fb87e',
-      blob:'#c8203c', mark:'#61091a', ink:'#ffffff', glow:0x0b8f5e
+      blob:'#c8203c', mark:'#61091a', ink:'#ffffff', onBlob:'#ffffff', glow:0x0b8f5e
     },
     blueberry: {
       name:'Jagoda', base:'#2733a8', deep:'#070d3a', light:'#4a57de',
-      blob:'#7d5cf0', mark:'#27186b', ink:'#ffffff', glow:0x0a49a0
+      blob:'#7d5cf0', mark:'#27186b', ink:'#ffffff', onBlob:'#ffffff', glow:0x0a49a0
     },
     lime: {
       name:'Limonka', base:'#4ea112', deep:'#123f04', light:'#79cc2b',
-      blob:'#e0d02f', mark:'#2f6b0c', ink:'#ffffff', glow:0x5fc93f
+      blob:'#e0d02f', mark:'#2f6b0c', ink:'#ffffff', onBlob:'#183a06', glow:0x5fc93f
     }
   };
 
@@ -92,7 +92,11 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
     g.restore();
   }
 
+  // Rysunki wyżej są tylko zapasem. Docelowo na etykiecie ląduje render
+  // tego samego modelu 3D, który lata dookoła puszki — dwa kółka z ogonkiem
+  // wyglądały tanio i to była słuszna uwaga.
   const MARK = { cherry: drawCherryMark, blueberry: drawBerryMark, lime: drawLimeMark };
+  const SPRITE = {};
 
   /* =========================================================
      2. Skropliny z fotografii
@@ -146,6 +150,25 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
       g.fillStyle = sh; g.fillRect(x, 0, W / 2, H);
     }
 
+    // Fala koloru smaku w dolnej części — twarda krawędź zamiast rozmytej
+    // plamy. Sinus ma dokładnie dwa okresy na szerokość tekstury, czyli jeden
+    // na front, dzięki czemu domyka się na szwie walca.
+    g.save();
+    g.fillStyle = f.blob;
+    g.beginPath();
+    const waveY = (x) => H * .618 + Math.sin(x / W * Math.PI * 4) * H * .030;
+    g.moveTo(0, waveY(0));
+    for (let x = 8; x <= W; x += 8) g.lineTo(x, waveY(x));
+    g.lineTo(W, H); g.lineTo(0, H);
+    g.closePath(); g.fill();
+    // cienka jasna linia na grzbiecie fali
+    g.globalAlpha = .5; g.strokeStyle = f.ink; g.lineWidth = 4;
+    g.beginPath();
+    g.moveTo(0, waveY(0) - 12);
+    for (let x = 8; x <= W; x += 8) g.lineTo(x, waveY(x) - 12);
+    g.stroke();
+    g.restore();
+
     // niezadrukowane pasy blachy przy krawędziach
     for (const [y0, y1] of [[0, H * .055], [H * .945, H]]) {
       const mg = g.createLinearGradient(0, y0, 0, y1);
@@ -156,14 +179,16 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 
     // dwa fronty
     for (const cx of [W * .25, W * .75]) {
-      // miękka plama koloru smaku pod treścią
-      const rg = g.createRadialGradient(cx, H * .60, 0, cx, H * .60, W * .19);
-      rg.addColorStop(0,   f.blob);
-      rg.addColorStop(.55, f.blob);
+      // Delikatna poświata zamiast wielkiej plamy koloru: rozmyty krążek
+      // tylko odcina owoc od tła (potrzebne zwłaszcza przy limonce, zielone
+      // na zielonym), a nie zamalowuje pół etykiety.
+      const rg = g.createRadialGradient(cx, H * .50, 0, cx, H * .50, W * .105);
+      rg.addColorStop(0,   f.light);
+      rg.addColorStop(.45, f.light);
       rg.addColorStop(1,   'rgba(0,0,0,0)');
-      g.save(); g.globalAlpha = .9;
+      g.save(); g.globalAlpha = .42;
       g.fillStyle = rg;
-      g.beginPath(); g.ellipse(cx, H * .60, W * .19, H * .30, 0, 0, 6.284); g.fill();
+      g.beginPath(); g.arc(cx, H * .50, W * .105, 0, 6.284); g.fill();
       g.restore();
 
       g.textAlign = 'center'; g.textBaseline = 'middle';
@@ -187,12 +212,24 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
       g.fillText('NAPÓJ GAZOWANY · ZERO', cx + 6, H * .345);
       g.restore();
 
-      // rysunek owocu
-      MARK[key](g, cx, H * .50, 1.05, f.mark);
+      // owoc: render modelu 3D, a gdyby go nie było — rysunek zapasowy
+      const sprite = SPRITE[key];
+      if (sprite) {
+        // miękki cień pod owocem, żeby nie wisiał w próżni
+        g.save();
+        g.globalAlpha = .3; g.fillStyle = '#000';
+        g.beginPath(); g.ellipse(cx, H * .565, W * .052, H * .022, 0, 0, 6.284);
+        g.filter = 'blur(14px)'; g.fill();
+        g.restore();
+        const box = W * .155;
+        g.drawImage(sprite, cx - box / 2, H * .50 - box / 2, box, box);
+      } else {
+        MARK[key](g, cx, H * .50, 1.05, f.mark);
+      }
 
-      // nazwa smaku pismem odręcznym
+      // nazwa smaku pismem odręcznym — leży już na fali koloru
       g.save();
-      g.fillStyle = f.ink;
+      g.fillStyle = f.onBlob;
       g.font = '400 150px Yellowtail, cursive';
       g.shadowColor = 'rgba(0,0,0,.28)'; g.shadowBlur = 20; g.shadowOffsetY = 6;
       g.fillText(f.name, cx, H * .715);
@@ -200,7 +237,7 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 
       // stopka
       g.save();
-      g.globalAlpha = .72; g.fillStyle = f.ink;
+      g.globalAlpha = .78; g.fillStyle = f.onBlob;
       g.font = '600 32px Inter, system-ui, sans-serif';
       g.letterSpacing = '7px';
       g.fillText('0 KCAL · 0 G CUKRU · 330 ML', cx + 4, H * .845);
@@ -210,6 +247,18 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
     // Krople NIE są wypalane w etykietę — spływają, więc mają własną
     // przezroczystą warstwę wody na zewnątrz walca (patrz `water` niżej).
     g.letterSpacing = '0px';
+
+    // ziarno farby — bez tego nadruk jest idealnie gładki i wygląda cyfrowo
+    const grain = g.createImageData(W, H);
+    for (let i = 0; i < grain.data.length; i += 4) {
+      const v = 118 + Math.random() * 20;
+      grain.data[i] = grain.data[i+1] = grain.data[i+2] = v;
+      grain.data[i+3] = 26;
+    }
+    const gc = document.createElement('canvas');
+    gc.width = W; gc.height = H;
+    gc.getContext('2d').putImageData(grain, 0, 0);
+    g.save(); g.globalCompositeOperation = 'overlay'; g.drawImage(gc, 0, 0); g.restore();
 
     const tex = new THREE.CanvasTexture(c);
     tex.colorSpace = THREE.SRGBColorSpace;
@@ -651,16 +700,20 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
   /* --- warstwa wody: cienka koszulka na korpusie, widoczna tylko tam,
      gdzie alfa mówi „kropla". Przewija się w dół, więc całe zroszenie
      powoli osiada. --------------------------------------------------- */
+  // Kropla wody NIE jest białą powłoką — jest przezroczysta i załamuje to,
+  // co pod nią. Poprzednia wersja malowała półprzezroczystą biel na etykiecie
+  // i wychodził z tego mleczny szron. `transmission` każe silnikowi próbkować
+  // scenę za materiałem, więc krople faktycznie zniekształcają nadruk.
   const waterMat = new THREE.MeshPhysicalMaterial({
-    color: 0xeaf2f7,
-    transparent: true, opacity: .34, depthWrite: false,
+    color: 0xffffff,
+    transparent: true, opacity: 1, depthWrite: false,
     alphaMap: dropAlpha,
+    transmission: 1, thickness: .05, ior: 1.33,
     normalMap: dropNormal,
-    normalScale: new THREE.Vector2(1.15, 1.15),
-    roughnessMap: dropRough,
-    roughness: .06, metalness: 0,
-    clearcoat: 1, clearcoatRoughness: .02,
-    envMapIntensity: 3.2
+    normalScale: new THREE.Vector2(1.35, 1.35),
+    roughness: .015, metalness: 0,
+    clearcoat: 1, clearcoatRoughness: .015,
+    envMapIntensity: 2.2
   });
   const water = new THREE.Mesh(
     new THREE.CylinderGeometry(R * 1.016, R * 1.016, TOP - BOT, 180, 1, true),
@@ -673,14 +726,16 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
   // w polu skroplin. Smuga jest ciemniejsza i bardziej lustrzana — czyta się
   // jako mokry ślad zmywający szron, a nie jako biała kreska.
   const dropMat = new THREE.MeshPhysicalMaterial({
-    color: 0xf4f9fd, transparent: true, opacity: .78, depthWrite: false,
+    color: 0xffffff, transparent: true, opacity: 1, depthWrite: false,
+    transmission: 1, thickness: .09, ior: 1.34,
     roughness: .01, metalness: 0,
-    clearcoat: 1, clearcoatRoughness: .01, envMapIntensity: 5
+    clearcoat: 1, clearcoatRoughness: .01, envMapIntensity: 3
   });
   const trailMat = new THREE.MeshPhysicalMaterial({
-    color: 0xa8c2d2, transparent: true, opacity: .58, depthWrite: false,
-    roughness: .02, metalness: 0,
-    clearcoat: 1, clearcoatRoughness: .02, envMapIntensity: 4
+    color: 0xffffff, transparent: true, opacity: 1, depthWrite: false,
+    transmission: .95, thickness: .04, ior: 1.33,
+    roughness: .03, metalness: 0,
+    clearcoat: 1, clearcoatRoughness: .03, envMapIntensity: 2.4
   });
 
   const RUNNERS = [];
@@ -1033,6 +1088,73 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
     requestAnimationFrame(frame);
   }
 
+  /* --- render owocu do sprite'a na etykietę -------------------
+     Ten sam model, który lata dookoła puszki, renderuję raz do tekstury
+     i wklejam w nadruk. Dzięki temu owoc na etykiecie i owoc w powietrzu
+     to dosłownie ten sam obiekt, a nie dwa różne rysunki. ------------ */
+  function fruitSprite(make, size) {
+    const obj = make();
+    const sc = new THREE.Scene();
+    sc.environment = scene.environment;
+    sc.add(new THREE.HemisphereLight(0xffffff, 0x223040, .85));
+    const k1 = new THREE.DirectionalLight(0xffffff, 2.8); k1.position.set(-1.6, 2.2, 2.4);
+    const k2 = new THREE.DirectionalLight(0xffffff, 1.1); k2.position.set(2.0, -.6, 1.4);
+    sc.add(k1, k2, obj);
+
+    obj.rotation.set(-.16, .55, .10);
+    const box = new THREE.Box3().setFromObject(obj);
+    const sz  = box.getSize(new THREE.Vector3());
+    obj.position.sub(box.getCenter(new THREE.Vector3()));
+
+    const half = Math.max(sz.x, sz.y) * .60;
+    const cam = new THREE.OrthographicCamera(-half, half, half, -half, -20, 20);
+    cam.position.set(0, 0, 5); cam.lookAt(0, 0, 0);
+
+    const rt = new THREE.WebGLRenderTarget(size, size);
+    const prevTarget = renderer.getRenderTarget();
+    const prevColor = new THREE.Color();
+    renderer.getClearColor(prevColor);
+    const prevAlpha = renderer.getClearAlpha();
+
+    renderer.setRenderTarget(rt);
+    renderer.setClearColor(0x000000, 0);
+    renderer.clear(true, true, true);
+    renderer.render(sc, cam);
+
+    const buf = new Uint8Array(size * size * 4);
+    renderer.readRenderTargetPixels(rt, 0, 0, size, size, buf);
+    renderer.setRenderTarget(prevTarget);
+    renderer.setClearColor(prevColor, prevAlpha);
+    rt.dispose();
+
+    const c = document.createElement('canvas');
+    c.width = c.height = size;
+    const g = c.getContext('2d');
+    const img = g.createImageData(size, size);
+    for (let y = 0; y < size; y++) {
+      // czytanie z bufora idzie od DOŁU obrazu, canvas liczy od góry
+      const src = (size - 1 - y) * size * 4;
+      for (let x = 0; x < size; x++) {
+        const i = src + x * 4, o = (y * size + x) * 4;
+        const a = buf[i + 3];
+        // bufor jest premnożony przez alfę, ImageData oczekuje niepremnożonego
+        const un = a ? 255 / a : 0;
+        img.data[o]     = Math.min(255, buf[i]     * un);
+        img.data[o + 1] = Math.min(255, buf[i + 1] * un);
+        img.data[o + 2] = Math.min(255, buf[i + 2] * un);
+        img.data[o + 3] = a;
+      }
+    }
+    g.putImageData(img, 0, 0);
+    return c;
+  }
+
+  function buildSprites(BUILD) {
+    Object.keys(BUILD).forEach(k => {
+      try { SPRITE[k] = fruitSprite(BUILD[k][0], 512); } catch (e) { /* zostaje rysunek */ }
+    });
+  }
+
   function rebuildLabels() {
     Object.keys(FLAVORS).forEach(k => { labels[k].dispose(); labels[k] = labelTexture(k); });
     bodyMat.map = labels[active] || labels.cherry;
@@ -1042,6 +1164,11 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
   const waitFonts = (document.fonts && document.fonts.ready) || Promise.resolve();
   waitFonts.then(() => { rebuildLabels(); mount(); });
 
-  // owoce dojeżdżają osobno — puszka nie czeka na kilka megabajtów siatek
-  loadModels().then(populateFruit);
+  // owoce dojeżdżają osobno — puszka nie czeka na kilka megabajtów siatek,
+  // a gdy już są, wracamy do etykiety i wklejamy w nią render owocu
+  Promise.all([waitFonts, loadModels()]).then(([, BUILD]) => {
+    populateFruit(BUILD);
+    buildSprites(BUILD);
+    rebuildLabels();
+  });
 })();
