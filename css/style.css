@@ -457,4 +457,13 @@ button{ font:inherit; color:inherit; background:none; border:0; cursor:pointer; 
 }
 .hero__cans{ pointer-events:none; }
 body.has3d .hero__cans{ pointer-events:auto; }
+
+/* Siatka hero leżała NAD puszką i zjadała wszystkie zdarzenia wskaźnika —
+   środkowa kolumna jest pusta, ale sam element i tak je łapał, więc
+   przeciąganie modelu nie działało w ogóle. Siatka i stopka przepuszczają
+   teraz wskaźnik, a łapią go tylko te elementy, które faktycznie są klikalne. */
+.hero__grid,
+.hero__foot{ pointer-events:none; }
+.lede,
+.rail{ pointer-events:auto; }
 body.has3d .can{ display:none; }      /* fotorendery tylko jako zapas */

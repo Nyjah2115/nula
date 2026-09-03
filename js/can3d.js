@@ -501,7 +501,7 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
   const FALLBACK = {
     cherry:    [makeCherry],
     blueberry: [makeBlueberry],
-    lime:      [makeLime, makeLimeSlice]
+    lime:      [makeLimeSlice]
   };
 
   // Modele z Higgsfielda (tripo_3d). Każdy przychodzi w swojej skali
@@ -511,7 +511,7 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
   const MODEL_FILES = {
     cherry:    ['media/models/cherry.glb'],
     blueberry: ['media/models/blueberry.glb'],
-    lime:      ['media/models/lime.glb', 'media/models/lime-wedge.glb']
+    lime:      ['media/models/lime-wedge.glb']   // same ćwiartki, bez całych limonek
   };
 
   function normalize(root) {
@@ -536,6 +536,18 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
     return outer;
   }
 
+  // Ćwiartka limonki ma sens tylko widziana od przekroju. Obracam ją tak,
+  // żeby jej najcieńsza oś patrzyła w stronę kamery, i oznaczam jako płaską —
+  // dzięki temu populateFruit nie rozrzuci jej losowo na wszystkie strony.
+  function faceCut(proto) {
+    const box = new THREE.Box3().setFromObject(proto);
+    const s = box.getSize(new THREE.Vector3());
+    const holder = proto.children[0];
+    if (s.x <= s.y && s.x <= s.z)      holder.rotation.y =  Math.PI / 2;
+    else if (s.y <= s.x && s.y <= s.z) holder.rotation.x = -Math.PI / 2;
+    proto.userData.flat = true;
+  }
+
   function loadModels() {
     const loader = new GLTFLoader();
     const jobs = [];
@@ -545,7 +557,12 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
       files.forEach((url, i) => {
         jobs.push(new Promise(res => {
           loader.load(url,
-            gltf => { built[key][i] = normalize(gltf.scene); res(); },
+            gltf => {
+              const proto = normalize(gltf.scene);
+              if (/wedge|slice/.test(url)) faceCut(proto);
+              built[key][i] = proto;
+              res();
+            },
             undefined,
             () => { built[key][i] = null; res(); });     // brak modelu = zapas
         }));
@@ -960,41 +977,78 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
   /* =========================================================
      5. Sterowanie
      ========================================================= */
-  const state = { yaw:0, yawT:0, vel:0, pitch:0, pitchT:0, scroll:0, drag:false, lastX:0 };
+  /* Poprzednia wersja obracała puszkę SAMĄ PRĘDKOŚCIĄ, która zaraz wygasała,
+     więc po puszczeniu wracała tam, gdzie była — jak na gumce. Do tego sam
+     ruch myszy nad hero obracał ją o ponad radian i walczył z przeciąganiem.
+
+     Teraz jest normalny model: `angle` to kąt trwały, przeciąganie przesuwa
+     go jeden do jednego z kursorem, a przy puszczeniu zostaje bezwładność
+     wyliczona z ostatniego ruchu. Najazd myszy daje tylko drobne odchylenie
+     DODAWANE na wierzch, którego nic nie akumuluje. Tarcie i wygładzenia
+     liczone z dt, więc na ekranie 120 Hz działa tak samo jak na 60 Hz. */
+  const DRAG_RAD_PER_PX = .011;   // ~90 px na radian
+  const FRICTION        = .08;    // ile prędkości zostaje po sekundzie
+  const AUTO_SPIN       = .16;    // rad/s, gdy nikt nie dotyka
+  const HOVER_YAW       = .22;    // maksymalne odchylenie od najazdu myszy
+
+  const state = {
+    angle: 0, vel: 0, idle: 0,
+    hover: 0, hoverT: 0, pitch: 0, pitchT: 0,
+    scroll: 0, drag: false, lastX: 0, lastT: 0
+  };
 
   hero.addEventListener('pointermove', e => {
     if (state.drag) return;
     const r = hero.getBoundingClientRect();
-    state.yawT   =  ((e.clientX - r.left) / r.width  - .5) * 1.15;
+    state.hoverT =  ((e.clientX - r.left) / r.width  - .5) * 2 * HOVER_YAW;
     state.pitchT = -((e.clientY - r.top)  / r.height - .5) * 0.42;
   });
-  hero.addEventListener('pointerleave', () => { state.yawT = 0; state.pitchT = 0; });
+  hero.addEventListener('pointerleave', () => { state.hoverT = 0; state.pitchT = 0; });
 
   canvas.addEventListener('pointerdown', e => {
-    state.drag = true; state.lastX = e.clientX;
+    state.drag  = true;
+    state.lastX = e.clientX;
+    state.lastT = performance.now();
+    state.vel   = 0;                 // chwytamy puszkę w locie, nie doganiamy jej
+    state.hoverT = 0;
     canvas.setPointerCapture(e.pointerId);
     canvas.style.cursor = 'grabbing';
   });
   canvas.addEventListener('pointermove', e => {
     if (!state.drag) return;
-    state.vel += (e.clientX - state.lastX) / 140;
-    state.lastX = e.clientX;
+    const now = performance.now();
+    const d   = (e.clientX - state.lastX) * DRAG_RAD_PER_PX;
+    const dt  = Math.max(8, now - state.lastT) / 1000;
+    state.angle += d;                // kąt zmienia się TRWALE
+    state.vel    = d / dt;           // a to jest wyrzut po puszczeniu
+    state.lastX  = e.clientX;
+    state.lastT  = now;
   });
-  const endDrag = () => { state.drag = false; canvas.style.cursor = 'grab'; };
+  const endDrag = e => {
+    if (!state.drag) return;
+    state.drag = false;
+    canvas.style.cursor = 'grab';
+    // ruch sprzed dłuższej chwili nie może udawać zamachu
+    if (performance.now() - state.lastT > 90) state.vel = 0;
+    if (e && e.pointerId !== undefined && canvas.hasPointerCapture(e.pointerId)) {
+      canvas.releasePointerCapture(e.pointerId);
+    }
+  };
   canvas.addEventListener('pointerup', endDrag);
   canvas.addEventListener('pointercancel', endDrag);
+  canvas.addEventListener('lostpointercapture', endDrag);
 
   document.addEventListener('scroll', () => {
     state.scroll = Math.min(1, Math.max(0, window.scrollY / window.innerHeight));
   }, { passive: true });
 
   /* --- zmiana smaku --------------------------------------- */
-  let spin = 0, active = 'cherry';
+  let active = 'cherry';
   function setFlavor(name) {
     const f = FLAVORS[name];
     if (!f || name === active) return;
     active = name;
-    spin += Math.PI * 2;
+    state.vel += 16;                 // zamach na mniej więcej pełny obrót
     glow.color.setHex(f.glow);
     // etykieta zmienia się w połowie obrotu, kiedy jest odwrócona tyłem
     setTimeout(() => { bodyMat.map = labels[name]; bodyMat.needsUpdate = true; }, 320);
@@ -1013,18 +1067,25 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
   }
   window.addEventListener('resize', resize);
 
-  let auto = 0, t0 = performance.now();
+  let t0 = performance.now();
   function frame(now) {
     const dt = Math.min(.05, (now - t0) / 1000); t0 = now;
 
-    if (!reduce) auto += dt * .16;
-    state.vel *= .93;
-    spin *= .92;
+    if (!state.drag) {
+      state.angle += state.vel * dt;
+      state.vel   *= Math.pow(FRICTION, dt);
+      if (Math.abs(state.vel) < .002) state.vel = 0;
+    }
 
-    state.yaw   += (state.yawT   - state.yaw)   * .06;
-    state.pitch += (state.pitchT - state.pitch) * .06;
+    // leniwy obrót wraca dopiero, gdy puszka się uspokoi
+    const idleTarget = (state.drag || Math.abs(state.vel) > .3 || reduce) ? 0 : AUTO_SPIN;
+    state.idle  += (idleTarget - state.idle) * Math.min(1, dt * 1.5);
+    state.angle += state.idle * dt;
 
-    can.rotation.y = auto + state.yaw + state.vel * 6 + spin;
+    state.hover += (state.hoverT - state.hover) * Math.min(1, dt * 4);
+    state.pitch += (state.pitchT - state.pitch) * Math.min(1, dt * 4);
+
+    can.rotation.y = state.angle + state.hover;
     can.rotation.x = 0.06 + state.pitch;
     can.position.y = Math.sin(now / 1400) * .05 - state.scroll * 1.1;
     can.scale.setScalar(0.63 * (1 + state.scroll * .12));
@@ -1052,7 +1113,8 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
       }
     });
 
-    orbit.rotation.y = auto * .35 + state.yaw * .5;
+    // owoce dryfują razem z puszką, ale wolniej — inaczej scena wygląda sztywno
+    orbit.rotation.y = state.angle * .35 + state.hover * .5;
     orbit.position.y = -state.scroll * .7;
 
     // komplet owoców aktywnego smaku wyrasta, pozostałe znikają
