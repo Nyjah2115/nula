@@ -13,9 +13,11 @@
    Jeżeli WebGL nie wystartuje, strona zostaje przy płaskich renderach
    z <img class="can"> — <canvas> montuje się dopiero po udanej inicjalizacji.
    ========================================================= */
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+
 (() => {
   'use strict';
-  if (!window.THREE) return;
 
   const hero   = document.querySelector('.hero');
   const holder = document.querySelector('.hero__cans');
@@ -445,11 +447,72 @@
     return grp;
   }
 
-  const BUILD = {
+  // Proceduralne bryły zostają jako zapas — jeżeli GLB się nie wczyta
+  // (brak pliku, błąd sieci), scena wygląda tak jak przedtem zamiast pustej.
+  const FALLBACK = {
     cherry:    [makeCherry],
     blueberry: [makeBlueberry],
     lime:      [makeLime, makeLimeSlice]
   };
+
+  // Modele z Higgsfielda (tripo_3d). Każdy przychodzi w swojej skali
+  // i ze środkiem gdzie popadnie, więc po wczytaniu normalizuję: środek
+  // bryły do zera i największy rozmiar POZIOMY do 1. Poziomy, nie ogólny —
+  // inaczej ogonek wiśni zjadłby całą skalę i sam owoc byłby mikroskopijny.
+  const MODEL_FILES = {
+    cherry:    ['media/models/cherry.glb'],
+    blueberry: ['media/models/blueberry.glb'],
+    lime:      ['media/models/lime.glb', 'media/models/lime-wedge.glb']
+  };
+
+  function normalize(root) {
+    const box = new THREE.Box3().setFromObject(root);
+    const size = box.getSize(new THREE.Vector3());
+    const mid  = box.getCenter(new THREE.Vector3());
+    const span = Math.max(size.x, size.z) || Math.max(size.x, size.y, size.z) || 1;
+    root.position.sub(mid);
+    const holder = new THREE.Group();
+    holder.add(root);
+    // 2/span, nie 1/span: proceduralne owoce stoją na kuli o promieniu 1,
+    // czyli rozpiętości 2, i pod to są dobrane mnożniki skali niżej
+    holder.scale.setScalar(2 / span);
+    const outer = new THREE.Group();
+    outer.add(holder);
+    outer.traverse(o => {
+      if (!o.isMesh) return;
+      o.castShadow = o.receiveShadow = false;
+      const m = o.material;
+      if (m) { m.envMapIntensity = 1.35; m.side = THREE.FrontSide; }
+    });
+    return outer;
+  }
+
+  function loadModels() {
+    const loader = new GLTFLoader();
+    const jobs = [];
+    const built = {};
+    Object.entries(MODEL_FILES).forEach(([key, files]) => {
+      built[key] = [];
+      files.forEach((url, i) => {
+        jobs.push(new Promise(res => {
+          loader.load(url,
+            gltf => { built[key][i] = normalize(gltf.scene); res(); },
+            undefined,
+            () => { built[key][i] = null; res(); });     // brak modelu = zapas
+        }));
+      });
+    });
+    return Promise.all(jobs).then(() => {
+      const out = {};
+      Object.keys(MODEL_FILES).forEach(key => {
+        const ok = built[key].filter(Boolean);
+        out[key] = ok.length
+          ? ok.map(proto => () => proto.clone(true))
+          : FALLBACK[key];
+      });
+      return out;
+    });
+  }
 
   /* =========================================================
      4. Scena
@@ -659,28 +722,31 @@
     );
   }
 
-  // owoce — komplet na każdy smak
-  Object.keys(BUILD).forEach(k => {
-    const makers = BUILD[k];
-    for (let i = 0; i < 11; i++) {
-      const g = makers[i % makers.length]();
-      g.position.copy(place(i, 11, .82));
-      const s = .072 + Math.random() * .042;
-      g.scale.setScalar(s);
-      if (g.userData.flat) {
-        g.rotation.set((Math.random() - .5) * .7, (Math.random() - .5) * .9, Math.random() * 6.28);
-      } else {
-        g.rotation.set(Math.random() * 6.28, Math.random() * 6.28, Math.random() * 6.28);
+  // owoce — komplet na każdy smak; wołane dopiero, gdy modele są gotowe
+  function populateFruit(BUILD) {
+    const start = document.body.dataset.flavor || 'cherry';
+    Object.keys(BUILD).forEach(k => {
+      const makers = BUILD[k];
+      for (let i = 0; i < 11; i++) {
+        const g = makers[i % makers.length]();
+        g.position.copy(place(i, 11, .82));
+        const s = .072 + Math.random() * .042;
+        g.scale.setScalar(s);
+        if (g.userData.flat) {
+          g.rotation.set((Math.random() - .5) * .7, (Math.random() - .5) * .9, Math.random() * 6.28);
+        } else {
+          g.rotation.set(Math.random() * 6.28, Math.random() * 6.28, Math.random() * 6.28);
+        }
+        g.visible = (k === start);
+        orbit.add(g);
+        props.push({
+          m: g, set: k, base: g.position.y, s0: s,
+          sp: .5 + Math.random(), ph: Math.random() * 6.28,
+          spin: (Math.random() - .5) * .35
+        });
       }
-      g.visible = (k === 'cherry');
-      orbit.add(g);
-      props.push({
-        m: g, set: k, base: g.position.y, s0: s,
-        sp: .5 + Math.random(), ph: Math.random() * 6.28,
-        spin: (Math.random() - .5) * .35
-      });
-    }
-  });
+    });
+  }
 
   const grow = { cherry: 1, blueberry: 0, lime: 0 };   // 0…1, animowane
 
@@ -823,4 +889,7 @@
 
   const waitFonts = (document.fonts && document.fonts.ready) || Promise.resolve();
   waitFonts.then(() => { rebuildLabels(); mount(); });
+
+  // owoce dojeżdżają osobno — puszka nie czeka na kilka megabajtów siatek
+  loadModels().then(populateFruit);
 })();

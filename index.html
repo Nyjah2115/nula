@@ -232,8 +232,15 @@
 
 </main>
 
-<script src="js/three.min.js"></script>
-<script src="js/can3d.js?v=17"></script>
+<script type="importmap">
+{
+  "imports": {
+    "three": "./js/vendor/three.module.js",
+    "three/addons/": "./js/vendor/"
+  }
+}
+</script>
+<script type="module" src="js/can3d.js?v=19"></script>
 <script src="js/main.js?v=3"></script>
 </body>
 </html>
