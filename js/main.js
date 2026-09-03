@@ -7,7 +7,7 @@
   const body   = document.body;
   const cans   = [...document.querySelectorAll('.can')];
   const chips  = [...document.querySelectorAll('.chip')];
-  const cards  = [...document.querySelectorAll('.card')];
+  const steps  = [...document.querySelectorAll('.step')];
   const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   /* --- teksty zmieniane razem ze smakiem ------------------ */
@@ -63,8 +63,30 @@
   }
 
   chips.forEach(chip => chip.addEventListener('click', () => setFlavor(chip.dataset.flavor)));
-  // najazd na kartę smaku w sekcji niżej też przestawia paletę strony
-  cards.forEach(card => card.addEventListener('mouseenter', () => setFlavor(card.dataset.flavor)));
+
+  /* --- sekcja smaków prowadzi puszkę scrollem ---------------
+     Każdy krok zajmuje ekran; ten, którego środek jest najbliżej środka
+     okna, przejmuje smak. Liczę to WPROST w zdarzeniu scrolla, a nie przez
+     IntersectionObserver — obserwator dostarcza zdarzenia dopiero w klatce
+     animacji, więc przy zdławionej pętli puszka rozjeżdżała się z tekstem.
+     Tutaj tekst i model zmieniają się w tym samym momencie. --------- */
+  function trackSteps() {
+    if (!steps.length) return;
+    const mid = window.innerHeight / 2;
+    let best = null, bestDist = Infinity;
+
+    steps.forEach(step => {
+      const r = step.getBoundingClientRect();
+      const d = Math.abs(r.top + r.height / 2 - mid);
+      if (d < bestDist) { bestDist = d; best = step; }
+    });
+
+    // krok liczy się tylko wtedy, gdy naprawdę wypełnia środek ekranu
+    const r = best.getBoundingClientRect();
+    const inView = r.top < mid && r.bottom > mid;
+    steps.forEach(s => s.classList.toggle('is-live', inView && s === best));
+    if (inView) setFlavor(best.dataset.flavor);
+  }
 
   /* --- pigułka nawigacji: podświetlenie jeździ za linkiem -- */
   const pill  = document.querySelector('.pill');
@@ -129,9 +151,15 @@
     onScroll();
   }
 
+  if (steps.length) {
+    document.addEventListener('scroll', trackSteps, { passive: true });
+    window.addEventListener('resize', trackSteps);
+    trackSteps();
+  }
+
   /* --- wejścia sekcji ------------------------------------- */
   const targets = document.querySelectorAll(
-    '.flavors .wrap > *, .zero .wrap > *, .specs__grid > *, .shop__inner > *'
+    '.flavors__intro > *, .zero .wrap > *, .specs__grid > *, .shop__inner > *'
   );
   targets.forEach(el => el.classList.add('reveal'));
 

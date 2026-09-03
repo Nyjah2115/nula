@@ -383,35 +383,58 @@ button{ font:inherit; color:inherit; background:none; border:0; cursor:pointer; 
 .flavors .wrap,.zero .wrap,.specs .wrap,.shop .wrap{ position:relative; z-index:1; }
 .flavors{ border-top:1px solid var(--line); }
 
-/* karty smaków */
-.cards{ display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:20px; }
-.card{
-  padding:26px; border-radius:26px;
-  background:var(--glass); border:1px solid var(--line);
-  transition:transform .5s var(--ease), border-color .5s var(--ease), background .5s var(--ease);
+/* ---------------------------------------------------------
+   Smaki jako sekwencja sterowana scrollem
+
+   Każdy krok zajmuje pełny ekran, a jego treść przykleja się na czas
+   przewijania. W tym samym czasie puszka — przypięta do okna w warstwie
+   3D — przejeżdża przez kadr i zmienia smak. Dlatego karty obok siebie
+   musiały zniknąć: przy trzech kartach w rzędzie nie ma czego prowadzić.
+   --------------------------------------------------------- */
+.flavors__intro{ margin-bottom:clamp(40px,8vh,90px); }
+
+.steps{ position:relative; }
+.step{ min-height:100vh; display:flex; align-items:center; }
+.step__box{
+  position:sticky; top:50%; transform:translateY(-50%);
+  width:var(--shell); margin:0 auto;
+  max-width:var(--shell);
 }
-.card:hover{ transform:translateY(-6px); border-color:rgba(255,255,255,.4); background:rgba(255,255,255,.11); }
-.card__art{
-  height:236px; margin:-6px 0 20px; display:grid; place-items:center; overflow:hidden;
+.step__box > *{ max-width:26rem; }
+
+.step__no{
+  margin:0 0 14px;
+  font-size:11px; font-weight:600; letter-spacing:.26em; text-transform:uppercase;
+  color:var(--accent); transition:color var(--slow);
 }
-.card__art img{
-  height:100%; width:100%; object-fit:contain;
-  /* kadr miniatury przecina bąbelki — wygaszamy tylko wąski pas przy krawędzi */
-  --fadeY:linear-gradient(to bottom, transparent 0, #000 9%, #000 91%, transparent 100%);
-  --fadeX:linear-gradient(to right,  transparent 0, #000 9%, #000 91%, transparent 100%);
-  -webkit-mask-image:var(--fadeY),var(--fadeX);
-          mask-image:var(--fadeY),var(--fadeX);
-  -webkit-mask-composite:source-in;
-          mask-composite:intersect;
-  filter:drop-shadow(0 26px 40px rgba(0,0,0,.5));
-  transition:transform .6s var(--ease);
+.step__name{
+  margin:0 0 20px;
+  font-family:"Yellowtail",cursive; font-weight:400;
+  font-size:clamp(54px,7vw,110px); line-height:.95; letter-spacing:.01em;
 }
-.card:hover .card__art img{ transform:translateY(-8px) scale(1.04); }
-.card h3{ margin:0 0 10px; font-size:22px; font-weight:600; letter-spacing:-.01em; }
-.card p{ margin:0 0 20px; font-size:14px; line-height:1.7; color:var(--muted); }
-.card dl{ display:flex; gap:22px; margin:0; padding-top:18px; border-top:1px solid var(--line); }
-.card dt{ font-size:10.5px; letter-spacing:.14em; text-transform:uppercase; color:var(--muted); }
-.card dd{ margin:5px 0 0; font-size:15px; font-weight:600; }
+.step__text{
+  margin:0 0 34px;
+  font-size:16px; line-height:1.75; color:var(--muted);
+}
+.step__data{
+  display:flex; gap:34px; margin:0;
+  padding-top:22px; border-top:1px solid var(--line);
+}
+.step__data dt{
+  font-size:10px; letter-spacing:.18em; text-transform:uppercase; color:var(--muted);
+}
+.step__data dd{ margin:6px 0 0; font-size:19px; font-weight:600; letter-spacing:-.01em; }
+
+/* Treść kroku jest widoczna zawsze — każdy krok ma własny ekran, a pudełko
+   przykleja się w jego obrębie, więc teksty nie mają jak na siebie nachodzić.
+   Wcześniejsza brama opacity:0 czekała na obserwator i przy wolniejszym
+   dostarczeniu zdarzenia sekcja zostawała pusta. Aktywny krok tylko lekko
+   wychodzi do przodu. */
+.step__box{
+  opacity:.45; transform:translateY(-50%) scale(.985);
+  transition:opacity .6s var(--ease), transform .6s var(--ease);
+}
+.step.is-live .step__box{ opacity:1; transform:translateY(-50%) scale(1); }
 
 /* liczby zero */
 .zeros{
@@ -516,7 +539,7 @@ button{ font:inherit; color:inherit; background:none; border:0; cursor:pointer; 
   .chip{ width:auto; flex:1 1 0; min-width:0; }
   .scrollhint{ margin:6px auto 0; }
 
-  .cards,.packs{ grid-template-columns:1fr; }
+  .packs{ grid-template-columns:1fr; }
   .zeros{ grid-template-columns:repeat(2,minmax(0,1fr)); }
   .specs__grid{ grid-template-columns:1fr; }
 }
@@ -545,8 +568,10 @@ button{ font:inherit; color:inherit; background:none; border:0; cursor:pointer; 
    Model 3D — <canvas> wchodzi w miejsce płaskich renderów
    --------------------------------------------------------- */
 .hero__stage{
-  position:absolute; inset:0; width:100%; height:100%;
-  touch-action:pan-y;                 /* pion zostaje scrollem strony */
+  position:fixed; inset:0; width:100%; height:100%;
+  z-index:1;                          /* nad tłami sekcji, pod ich treścią */
+  pointer-events:none;                /* przeciąganie łapie hero, nie płótno */
+  touch-action:pan-y;
 }
 .hero__cans{ pointer-events:none; }
 body.has3d .hero__cans{ pointer-events:auto; }
@@ -555,6 +580,7 @@ body.has3d .hero__cans{ pointer-events:auto; }
    środkowa kolumna jest pusta, ale sam element i tak je łapał, więc
    przeciąganie modelu nie działało w ogóle. Siatka i stopka przepuszczają
    teraz wskaźnik, a łapią go tylko te elementy, które faktycznie są klikalne. */
+.hero{ touch-action:pan-y; }
 .hero__grid,
 .picker{ pointer-events:none; }
 .lede,

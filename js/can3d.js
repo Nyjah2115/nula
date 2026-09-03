@@ -939,16 +939,17 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
   });
   hero.addEventListener('pointerleave', () => { state.hoverT = 0; state.pitchT = 0; });
 
-  canvas.addEventListener('pointerdown', e => {
+  hero.addEventListener('pointerdown', e => {
+    if (e.target.closest('.chip, a, button')) return;   // UI ma pierwszeństwo
     state.drag  = true;
     state.lastX = e.clientX;
     state.lastT = performance.now();
     state.vel   = 0;                 // chwytamy puszkę w locie, nie doganiamy jej
     state.hoverT = 0;
-    canvas.setPointerCapture(e.pointerId);
-    canvas.style.cursor = 'grabbing';
+    hero.setPointerCapture(e.pointerId);
+    hero.style.cursor = 'grabbing';
   });
-  canvas.addEventListener('pointermove', e => {
+  hero.addEventListener('pointermove', e => {
     if (!state.drag) return;
     const now = performance.now();
     const d   = (e.clientX - state.lastX) * DRAG_RAD_PER_PX;
@@ -961,20 +962,32 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
   const endDrag = e => {
     if (!state.drag) return;
     state.drag = false;
-    canvas.style.cursor = 'grab';
+    hero.style.cursor = 'grab';
     // ruch sprzed dłuższej chwili nie może udawać zamachu
     if (performance.now() - state.lastT > 90) state.vel = 0;
-    if (e && e.pointerId !== undefined && canvas.hasPointerCapture(e.pointerId)) {
-      canvas.releasePointerCapture(e.pointerId);
+    if (e && e.pointerId !== undefined && hero.hasPointerCapture(e.pointerId)) {
+      hero.releasePointerCapture(e.pointerId);
     }
   };
-  canvas.addEventListener('pointerup', endDrag);
-  canvas.addEventListener('pointercancel', endDrag);
-  canvas.addEventListener('lostpointercapture', endDrag);
+  hero.addEventListener('pointerup', endDrag);
+  hero.addEventListener('pointercancel', endDrag);
+  hero.addEventListener('lostpointercapture', endDrag);
 
   document.addEventListener('scroll', () => {
-    state.scroll = Math.min(1, Math.max(0, window.scrollY / window.innerHeight));
+    // Zasięg mierzę przy każdym scrollu, a nie raz przy starcie: strona rośnie
+    // w trakcie ładowania (czcionki, modele), więc wartość policzona na dzień
+    // dobry potrafi się zdezaktualizować i puszka nie zeszłaby z kadru.
+    if (flavors) {
+      const r = flavors.getBoundingClientRect();
+      stageEnd = Math.max(1, r.bottom + window.scrollY - window.innerHeight * .55);
+    }
+    state.scroll = Math.min(1, Math.max(0, window.scrollY / stageEnd));
   }, { passive: true });
+
+  const smoothstep = (a, b, x) => {
+    const t = Math.min(1, Math.max(0, (x - a) / (b - a)));
+    return t * t * (3 - 2 * t);
+  };
 
   /* --- zmiana smaku --------------------------------------- */
   let active = 'cherry';
@@ -1005,7 +1018,7 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
     swapAtAngle  = state.angle + Math.PI * .85;   // gdy front odjedzie w tył
     swapDeadline = performance.now() + 1400;      // awaryjnie, gdyby ktoś przytrzymał
   }
-  window.NULA3D = { setFlavor, can, camera, scene };   // przydatne przy podglądzie bryły
+  window.NULA3D = { setFlavor, can, camera, scene, state };   // przydatne przy podglądzie
 
   /* =========================================================
      6. Pętla i rozmiar
@@ -1013,14 +1026,24 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
   // Na szerokim ekranie puszka stoi w prawej części kadru — treść ma wtedy
   // całą lewą kolumnę dla siebie. Wąsko wraca na środek, bo tam układ
   // przechodzi na jedną kolumnę.
-  let shiftX = 0;
+  // Płótno jest przypięte do okna i przechodzi przez kilka sekcji, więc
+  // wymiary bierzemy z okna, a nie z hero.
+  const flavors = document.querySelector('.flavors');
+  let wide = true, stageEnd = 1;
+
   function resize() {
-    const w = hero.clientWidth, h = hero.clientHeight;
+    const w = window.innerWidth, h = window.innerHeight;
     renderer.setSize(w, h, false);
     camera.aspect = w / h;
     camera.position.z = w / h < 1 ? 6.6 : 4.6;
     camera.updateProjectionMatrix();
-    shiftX = w / h > 1.15 ? .58 : 0;
+    wide = w / h > 1.15;
+
+    // sekwencja trwa od góry strony do końca sekcji smaków
+    if (flavors) {
+      const r = flavors.getBoundingClientRect();
+      stageEnd = Math.max(1, r.bottom + window.scrollY - h * .55);
+    }
   }
   window.addEventListener('resize', resize);
 
@@ -1066,14 +1089,25 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 
     can.rotation.y = state.angle + state.hover;
     can.rotation.x = 0.06 + state.pitch;
-    can.position.x = shiftX;
-    can.position.y = Math.sin(now / 1400) * .05 - state.scroll * 1.1;
-    can.scale.setScalar(0.63 * (1 + state.scroll * .12));
+    /* --- choreografia: puszka jedzie przez stronę razem ze scrollem ---
+       hero → sekcja smaków (bliżej środka, większa) → wyjazd w górę. */
+    const p    = state.scroll;
+    const move = smoothstep(.03, .40, p);   // przejście z hero do sekcji smaków
+    const exit = smoothstep(.86, 1.0, p);   // zjazd z kadru na końcu sekwencji
+
+    const x = wide ? .58 + (.42 - .58) * move : 0;
+    const s = (.63 + (.95 - .63) * move) * (1 - exit * .5);
+
+    can.position.x = x;
+    can.position.y = Math.sin(now / 1400) * .05 + move * .04 + exit * 2.2;
+    can.scale.setScalar(s);
+    canvas.style.opacity = String(1 - exit);
+    canvas.style.visibility = exit >= 1 ? 'hidden' : 'visible';
 
     // owoce dryfują razem z puszką, ale wolniej — inaczej scena wygląda sztywno
     orbit.rotation.y = state.angle * .35 + state.hover * .5;
-    orbit.position.x = shiftX;
-    orbit.position.y = -state.scroll * .7;
+    orbit.position.x = x;
+    orbit.position.y = move * .12 + exit * 2.2;
 
     // komplet owoców aktywnego smaku wyrasta, pozostałe znikają
     for (const k in grow) {
@@ -1100,7 +1134,8 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 
   /* --- start dopiero po dojechaniu czcionek (napisy na etykiecie) */
   function mount() {
-    holder.appendChild(canvas);
+    // płótno wychodzi z hero na poziom strony — ma towarzyszyć scrollowi
+    document.body.appendChild(canvas);
     document.body.classList.add('has3d');
     canvas.style.cursor = 'grab';
     resize();

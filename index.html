@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Yellowtail&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/style.css?v=20">
+<link rel="stylesheet" href="css/style.css?v=23">
 </head>
 <body data-flavor="cherry">
 
@@ -122,46 +122,61 @@
     </div>
   </section>
 
-  <!-- ============ SMAKI ============ -->
+  <!-- ============ SMAKI — sekwencja sterowana scrollem ============ -->
   <section class="flavors" id="smaki">
-    <div class="wrap">
+    <div class="wrap flavors__intro">
       <p class="eyebrow">Trzy smaki</p>
       <h2 class="head">Zero kompromisów<br><em>w każdym łyku</em></h2>
+    </div>
 
-      <div class="cards">
-        <article class="card" data-flavor="cherry">
-          <div class="card__art"><img src="media/thumb-cherry.png" alt="Puszka NULA Wiśnia"></div>
-          <h3>Wiśnia</h3>
-          <p>Ciemna, dojrzała wiśnia z lekką kwasowością na finiszu. Najgłębszy z całej trójki.</p>
-          <dl>
-            <div><dt>Kalorie</dt><dd>0 kcal</dd></div>
-            <div><dt>Cukier</dt><dd>0 g</dd></div>
+    <div class="steps">
+      <article class="step" data-flavor="cherry">
+        <div class="step__box">
+          <p class="step__no">Smak 01</p>
+          <h3 class="step__name">Wiśnia</h3>
+          <p class="step__text">
+            Ciemna, dojrzała wiśnia z lekką kwasowością na finiszu.
+            Najgłębszy z całej trójki — pije się go wolno.
+          </p>
+          <dl class="step__data">
             <div><dt>Sok</dt><dd>4%</dd></div>
-          </dl>
-        </article>
-
-        <article class="card" data-flavor="blueberry">
-          <div class="card__art"><img src="media/thumb-blueberry.png" alt="Puszka NULA Jagoda"></div>
-          <h3>Jagoda</h3>
-          <p>Leśna jagoda i chłodny nos. Okrągły, spokojny smak, który nie zostawia posmaku.</p>
-          <dl>
             <div><dt>Kalorie</dt><dd>0 kcal</dd></div>
             <div><dt>Cukier</dt><dd>0 g</dd></div>
+          </dl>
+        </div>
+      </article>
+
+      <article class="step" data-flavor="blueberry">
+        <div class="step__box">
+          <p class="step__no">Smak 02</p>
+          <h3 class="step__name">Jagoda</h3>
+          <p class="step__text">
+            Leśna jagoda i chłodny nos. Okrągły, spokojny smak,
+            który nie zostawia po sobie posmaku.
+          </p>
+          <dl class="step__data">
             <div><dt>Sok</dt><dd>3%</dd></div>
-          </dl>
-        </article>
-
-        <article class="card" data-flavor="lime">
-          <div class="card__art"><img src="media/thumb-lime.png" alt="Puszka NULA Limonka"></div>
-          <h3>Limonka</h3>
-          <p>Ostry, cytrusowy start i mocne bąbelki. Ten, po który sięgasz w upał.</p>
-          <dl>
             <div><dt>Kalorie</dt><dd>0 kcal</dd></div>
             <div><dt>Cukier</dt><dd>0 g</dd></div>
-            <div><dt>Sok</dt><dd>5%</dd></div>
           </dl>
-        </article>
-      </div>
+        </div>
+      </article>
+
+      <article class="step" data-flavor="lime">
+        <div class="step__box">
+          <p class="step__no">Smak 03</p>
+          <h3 class="step__name">Limonka</h3>
+          <p class="step__text">
+            Ostry, cytrusowy start i mocne bąbelki.
+            Ten, po który sięgasz w upał, bez zastanowienia.
+          </p>
+          <dl class="step__data">
+            <div><dt>Sok</dt><dd>5%</dd></div>
+            <div><dt>Kalorie</dt><dd>0 kcal</dd></div>
+            <div><dt>Cukier</dt><dd>0 g</dd></div>
+          </dl>
+        </div>
+      </article>
     </div>
   </section>
 
@@ -261,8 +276,8 @@
   }
 }
 </script>
-<script type="module" src="js/can3d.js?v=37"></script>
+<script type="module" src="js/can3d.js?v=39"></script>
 <script src="js/bubbles.js?v=4"></script>
-<script src="js/main.js?v=5"></script>
+<script src="js/main.js?v=7"></script>
 </body>
 </html>
