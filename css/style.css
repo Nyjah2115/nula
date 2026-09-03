@@ -113,7 +113,7 @@ button{ font:inherit; color:inherit; background:none; border:0; cursor:pointer; 
   position:relative;
   min-height:100svh;
   display:flex; flex-direction:column; justify-content:center;
-  padding:120px clamp(18px,3.4vw,44px) clamp(150px,26vh,240px);
+  padding:104px clamp(18px,3.4vw,44px) clamp(230px,36vh,330px);
   overflow:hidden;
 }
 
@@ -221,7 +221,7 @@ button{ font:inherit; color:inherit; background:none; border:0; cursor:pointer; 
 
 .lede__stats{
   display:flex; flex-wrap:wrap; gap:28px;
-  margin:38px 0 0; padding-top:22px;
+  margin:32px 0 0; padding-top:20px;
   border-top:1px solid var(--line);
 }
 .lede__stats dt{
@@ -249,7 +249,7 @@ button{ font:inherit; color:inherit; background:none; border:0; cursor:pointer; 
 
 .chip{
   position:relative; overflow:hidden; isolation:isolate;
-  width:clamp(116px,11.5vw,164px);
+  width:clamp(112px,10.8vw,152px);
   padding:14px 16px 16px; text-align:left;
   border-radius:22px;
   background:var(--glass); border:1px solid var(--line);
@@ -269,16 +269,18 @@ button{ font:inherit; color:inherit; background:none; border:0; cursor:pointer; 
   transition:opacity .55s var(--ease), transform .55s var(--ease);
 }
 
+/* Miniatura mieści CAŁĄ puszkę — wcześniej kadr był kwadratowy i ucinał
+   jej górę oraz dół. `contain` zamiast przeskalowania na ślepo. */
 .chip__shot{
   position:relative; display:block;
-  width:100%; height:74px; margin-bottom:12px;
+  width:100%; height:124px; margin-bottom:12px;
   border-radius:14px; overflow:hidden;
   background:rgba(0,0,0,.22);
 }
 .chip__shot img{
-  position:absolute; top:50%; left:50%;
-  width:auto; height:172%; max-width:none;
-  transform:translate(-50%,-50%);
+  position:absolute; inset:0;
+  width:100%; height:100%; max-width:none;
+  object-fit:contain;
   transition:transform .6s var(--ease), filter .6s var(--ease);
 }
 
@@ -304,7 +306,7 @@ button{ font:inherit; color:inherit; background:none; border:0; cursor:pointer; 
 }
 .chip:hover .chip__wash{ opacity:.55; transform:translateY(0); }
 .chip:hover .chip__shot img{
-  transform:translate(-50%,-58%) scale(1.16) rotate(-6deg);
+  transform:translateY(-7px) scale(1.12) rotate(-5deg);
   filter:drop-shadow(0 18px 24px rgba(0,0,0,.55));
 }
 .chip:hover .chip__go{ opacity:1; transform:none; }
