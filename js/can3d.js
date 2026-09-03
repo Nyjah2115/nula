@@ -5,10 +5,8 @@
    po obwodzie) + dwa lathe'y na szyjkę z wieczkiem i na denko.
    Etykieta rysowana na canvasie, osobno dla każdego smaku.
 
-   Dookoła latają PRAWDZIWE owoce zbudowane z brył — wiśnie z ogonkami,
-   jagody z koronkami, limonki i przekrojone połówki — a nie kulki.
-   Każdy smak ma swój komplet; przy przełączeniu jeden zestaw się chowa,
-   drugi wyrasta (skalowanie, bez przezroczystości).
+   Dookoła latają owoce — modele 3D, po jednym komplecie na smak.
+   Przy przełączeniu jeden zestaw się chowa, drugi wyrasta.
 
    Jeżeli WebGL nie wystartuje, strona zostaje przy płaskich renderach
    z <img class="can"> — <canvas> montuje się dopiero po udanej inicjalizacji.
@@ -99,29 +97,9 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
   const SPRITE = {};
 
   /* =========================================================
-     2. Skropliny z fotografii
-
-     Mapy powstały narzędziem tools/drops.swift z jednego zdjęcia
-     (media/raw/drops-a.png, OpenArt): normalna, chropowatość i warstwa
-     światła na etykietę. Wszystkie z tego samego kadru, więc kropla
-     w kolorze leży dokładnie tam, gdzie kropla w relief i w połysku.
-     Kadr jest domknięty w poziomie, bo etykieta owija się wokół walca.
+     2. Rozmiar tekstury etykiety
      ========================================================= */
   const TW = 2048, TH = 1024;
-
-  const texLoader = new THREE.TextureLoader();
-  function dataTex(url) {
-    const t = texLoader.load(url);
-    t.wrapS = THREE.RepeatWrapping;
-    t.offset.x = .25;                 // ten sam obrót co etykieta
-    t.anisotropy = 8;
-    return t;
-  }
-  const dropNormal = dataTex('media/drops-normal.jpg');
-  const dropRough  = dataTex('media/drops-rough.jpg');
-  const dropAlpha  = dataTex('media/drops-alpha.jpg');
-  // mapa zawija się w obu osiach, więc można ją przewijać w dół bez szwu
-  [dropNormal, dropRough, dropAlpha].forEach(t => { t.wrapT = THREE.RepeatWrapping; });
 
   /* =========================================================
      3. Tekstura etykiety
@@ -244,8 +222,6 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
       g.restore();
     }
 
-    // Krople NIE są wypalane w etykietę — spływają, więc mają własną
-    // przezroczystą warstwę wody na zewnątrz walca (patrz `water` niżej).
     g.letterSpacing = '0px';
 
     // ziarno farby — bez tego nadruk jest idealnie gładki i wygląda cyfrowo
@@ -714,72 +690,6 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
     [R*.20,  BOT-.036  ], [0,      BOT-.034]
   ]), metalMat));
 
-  /* --- warstwa wody: cienka koszulka na korpusie, widoczna tylko tam,
-     gdzie alfa mówi „kropla". Przewija się w dół, więc całe zroszenie
-     powoli osiada. --------------------------------------------------- */
-  // Kropla wody NIE jest białą powłoką — jest przezroczysta i załamuje to,
-  // co pod nią. Poprzednia wersja malowała półprzezroczystą biel na etykiecie
-  // i wychodził z tego mleczny szron. `transmission` każe silnikowi próbkować
-  // scenę za materiałem, więc krople faktycznie zniekształcają nadruk.
-  const waterMat = new THREE.MeshPhysicalMaterial({
-    color: 0xffffff,
-    transparent: true, opacity: 1, depthWrite: false,
-    alphaMap: dropAlpha,
-    transmission: 1, thickness: .05, ior: 1.33,
-    normalMap: dropNormal,
-    normalScale: new THREE.Vector2(1.35, 1.35),
-    roughness: .015, metalness: 0,
-    clearcoat: 1, clearcoatRoughness: .015,
-    envMapIntensity: 2.2
-  });
-  const water = new THREE.Mesh(
-    new THREE.CylinderGeometry(R * 1.016, R * 1.016, TOP - BOT, 180, 1, true),
-    waterMat
-  );
-  can.add(water);
-
-  /* --- pojedyncze krople, które naprawdę zbiegają po puszce ---------- */
-  // Kropla biegnąca musi być wyraźnie większa od zroszenia, inaczej ginie
-  // w polu skroplin. Smuga jest ciemniejsza i bardziej lustrzana — czyta się
-  // jako mokry ślad zmywający szron, a nie jako biała kreska.
-  const dropMat = new THREE.MeshPhysicalMaterial({
-    color: 0xffffff, transparent: true, opacity: 1, depthWrite: false,
-    transmission: 1, thickness: .09, ior: 1.34,
-    roughness: .01, metalness: 0,
-    clearcoat: 1, clearcoatRoughness: .01, envMapIntensity: 3
-  });
-  const trailMat = new THREE.MeshPhysicalMaterial({
-    color: 0xffffff, transparent: true, opacity: 1, depthWrite: false,
-    transmission: .95, thickness: .04, ior: 1.33,
-    roughness: .03, metalness: 0,
-    clearcoat: 1, clearcoatRoughness: .03, envMapIntensity: 2.4
-  });
-
-  const RUNNERS = [];
-  for (let i = 0; i < 9; i++) {
-    const g = new THREE.Group();                 // obrót grupy = kąt na obwodzie
-    const head = new THREE.Mesh(SPHERE, dropMat);
-    head.position.z = R * 1.026;
-    head.scale.set(.04, .058, .018);
-    g.add(head);
-
-    const tail = new THREE.Mesh(SPHERE, trailMat);
-    tail.position.set(0, .085, R * 1.021);
-    tail.scale.set(.015, .085, .009);
-    g.add(tail);
-
-    g.rotation.y = Math.random() * 6.284;
-    g.position.y = BOT + Math.random() * (TOP - BOT);
-    can.add(g);
-    RUNNERS.push({ g, head, tail, sp: .09 + Math.random() * .16, wait: Math.random() * 4 });
-  }
-
-  // tarcza wieczka z rowkiem i zawleczką, tuż nad płaskim dnem lathe'a
-  const lid = new THREE.Mesh(new THREE.CircleGeometry(R * .74, 72), lidMat);
-  lid.rotation.x = -Math.PI / 2;
-  lid.position.y = TOP + .1478;
-  shell.add(lid);
-
   /* =========================================================
      Puszka z modelu (media/models/can.glb)
 
@@ -1089,29 +999,6 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
     can.rotation.x = 0.06 + state.pitch;
     can.position.y = Math.sin(now / 1400) * .05 - state.scroll * 1.1;
     can.scale.setScalar(0.63 * (1 + state.scroll * .12));
-
-    // całe zroszenie powoli osiada w dół
-    const slide = dt * .025;
-    dropNormal.offset.y -= slide;
-    dropRough.offset.y  -= slide;
-    dropAlpha.offset.y  -= slide;
-
-    // krople biegnące: przyspieszają, po zejściu na dół czekają i wracają
-    RUNNERS.forEach(r => {
-      if (r.wait > 0) { r.wait -= dt; r.g.visible = false; return; }
-      r.g.visible = true;
-      r.sp += dt * .06;                                  // grawitacja
-      r.g.position.y -= r.sp * dt * 2.2;
-      const run = Math.min(1, (TOP - r.g.position.y) / (TOP - BOT));
-      r.tail.scale.y = .03 + run * .26;                  // smuga rośnie za kroplą
-      r.tail.position.y = r.tail.scale.y * 1.05;
-      if (r.g.position.y < BOT - .05) {
-        r.g.position.y = TOP - .02;
-        r.g.rotation.y = Math.random() * 6.284;
-        r.sp = .09 + Math.random() * .16;
-        r.wait = Math.random() * 3.5;
-      }
-    });
 
     // owoce dryfują razem z puszką, ale wolniej — inaczej scena wygląda sztywno
     orbit.rotation.y = state.angle * .35 + state.hover * .5;
