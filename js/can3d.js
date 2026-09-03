@@ -93,11 +93,88 @@
   const MARK = { cherry: drawCherryMark, blueberry: drawBerryMark, lime: drawLimeMark };
 
   /* =========================================================
-     2. Tekstura etykiety
+     2. Skropliny — jedno pole kropel dla wszystkich map
+
+     Wcześniej krople na etykiecie i w mapie chropowatości były losowane
+     osobno i w innej rozdzielczości, więc podświetlenie kropli nie leżało
+     tam, gdzie sama kropla. Teraz jedna lista pozycji zasila kolor,
+     chropowatość i mapę normalnych — dopiero to sprawia, że krople
+     wyglądają jak wypukłości, a nie jak nadruk.
+     ========================================================= */
+  const TW = 2048, TH = 1024;
+  const DROPS = [];
+  for (let i = 0; i < 2400; i++) {
+    DROPS.push({
+      x: Math.random() * TW,
+      y: Math.random() * TH,
+      r: 1.5 + Math.pow(Math.random(), 2.7) * 13
+    });
+  }
+
+  // jedna kropla jako gotowy stempel mapy normalnych (jest obrotowo
+  // symetryczna, więc wystarczy jeden sprite na wszystkie)
+  function dropSprite() {
+    const S = 64, c = document.createElement('canvas');
+    c.width = c.height = S;
+    const g = c.getContext('2d'), img = g.createImageData(S, S), d = img.data, h = S / 2;
+    for (let y = 0; y < S; y++) for (let x = 0; x < S; x++) {
+      const dx = (x + .5 - h) / h, dy = (y + .5 - h) / h;
+      const q = Math.hypot(dx, dy), i = (y * S + x) * 4;
+      if (q > 1) { d[i] = 128; d[i+1] = 128; d[i+2] = 255; d[i+3] = 0; continue; }
+      const k = .78;                                  // spłaszczona czasza, nie półkula
+      let nx = dx * k, ny = dy * k;
+      let nz = Math.sqrt(Math.max(.02, 1 - nx * nx - ny * ny));
+      const L = Math.sqrt(nx*nx + ny*ny + nz*nz); nx /= L; ny /= L; nz /= L;
+      d[i]   = (nx * .5 + .5) * 255;
+      d[i+1] = (-ny * .5 + .5) * 255;
+      d[i+2] = (nz * .5 + .5) * 255;
+      d[i+3] = q > .9 ? (1 - (q - .9) / .1) * 255 : 255;
+    }
+    g.putImageData(img, 0, 0);
+    return c;
+  }
+
+  function dropletMaps() {
+    const sprite = dropSprite();
+
+    const nc = document.createElement('canvas'); nc.width = TW; nc.height = TH;
+    const ng = nc.getContext('2d');
+    ng.fillStyle = '#8080ff'; ng.fillRect(0, 0, TW, TH);
+
+    const rc = document.createElement('canvas'); rc.width = TW; rc.height = TH;
+    const rg = rc.getContext('2d');
+    // lakier puszki: półmat z lekkim smugowaniem, żeby odbicie nie było idealne
+    rg.fillStyle = '#9c9c9c'; rg.fillRect(0, 0, TW, TH);
+    for (let i = 0; i < 260; i++) {
+      const x = Math.random() * TW, w = 8 + Math.random() * 60;
+      const lg = rg.createLinearGradient(x, 0, x + w, 0);
+      const v = Math.random() < .5 ? '#8d8d8d' : '#a9a9a9';
+      lg.addColorStop(0, 'rgba(0,0,0,0)'); lg.addColorStop(.5, v); lg.addColorStop(1, 'rgba(0,0,0,0)');
+      rg.fillStyle = lg; rg.fillRect(x, 0, w, TH);
+    }
+
+    for (const p of DROPS) {
+      ng.drawImage(sprite, p.x - p.r, p.y - p.r, p.r * 2, p.r * 2);
+      const d = rg.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.r);
+      d.addColorStop(0,   '#0d0d0d');
+      d.addColorStop(.76, '#232323');
+      d.addColorStop(1,   '#9c9c9c');
+      rg.fillStyle = d; rg.beginPath(); rg.arc(p.x, p.y, p.r, 0, 6.284); rg.fill();
+    }
+
+    const nt = new THREE.CanvasTexture(nc);
+    nt.wrapS = THREE.RepeatWrapping; nt.offset.x = .25; nt.anisotropy = 8;
+    const rt = new THREE.CanvasTexture(rc);
+    rt.wrapS = THREE.RepeatWrapping; rt.offset.x = .25; rt.anisotropy = 8;
+    return { normal: nt, rough: rt };
+  }
+
+  /* =========================================================
+     3. Tekstura etykiety
      ========================================================= */
   function labelTexture(key) {
     const f = FLAVORS[key];
-    const W = 2048, H = 1024;          // dwa identyczne fronty obok siebie
+    const W = TW, H = TH;              // dwa identyczne fronty obok siebie
     const c = document.createElement('canvas');
     c.width = W; c.height = H;
     const g = c.getContext('2d');
@@ -180,17 +257,15 @@
       g.restore();
     }
 
-    // skropliny
+    // skropliny — te same pozycje co w mapie normalnych i chropowatości
     g.letterSpacing = '0px';
-    for (let i = 0; i < 1600; i++) {
-      const x = Math.random() * W, y = Math.random() * H;
-      const r = 1.6 + Math.pow(Math.random(), 2.6) * 12;
-      const d = g.createRadialGradient(x - r * .35, y - r * .4, 0, x, y, r);
-      d.addColorStop(0,   'rgba(255,255,255,.5)');
-      d.addColorStop(.45, 'rgba(255,255,255,.08)');
-      d.addColorStop(.85, 'rgba(0,0,0,.15)');
-      d.addColorStop(1,   'rgba(255,255,255,.28)');
-      g.fillStyle = d; g.beginPath(); g.arc(x, y, r, 0, 6.284); g.fill();
+    for (const p of DROPS) {
+      const d = g.createRadialGradient(p.x - p.r * .34, p.y - p.r * .38, 0, p.x, p.y, p.r);
+      d.addColorStop(0,   'rgba(255,255,255,.42)');
+      d.addColorStop(.4,  'rgba(255,255,255,.05)');
+      d.addColorStop(.86, 'rgba(0,0,0,.13)');
+      d.addColorStop(1,   'rgba(255,255,255,.24)');
+      g.fillStyle = d; g.beginPath(); g.arc(p.x, p.y, p.r, 0, 6.284); g.fill();
     }
 
     const tex = new THREE.CanvasTexture(c);
@@ -201,23 +276,75 @@
     return tex;
   }
 
-  /* --- mapa chropowatości: kropla jest gładsza od lakieru --- */
-  function dropletRoughness() {
-    const W = 1024, H = 512;
+  /* --- wieczko: szczotkowane aluminium z rowkiem i zawleczką --- */
+  function lidTexture() {
+    const S = 1024, R = S / 2;
     const c = document.createElement('canvas');
-    c.width = W; c.height = H;
+    c.width = c.height = S;
     const g = c.getContext('2d');
-    g.fillStyle = '#8f8f8f'; g.fillRect(0, 0, W, H);
-    for (let i = 0; i < 1000; i++) {
-      const x = Math.random() * W, y = Math.random() * H;
-      const r = 1.5 + Math.pow(Math.random(), 2.4) * 7;
-      const d = g.createRadialGradient(x, y, 0, x, y, r);
-      d.addColorStop(0, '#101010'); d.addColorStop(.8, '#303030'); d.addColorStop(1, '#8f8f8f');
-      g.fillStyle = d; g.beginPath(); g.arc(x, y, r, 0, 6.284); g.fill();
+    g.translate(R, R);
+
+    g.fillStyle = '#dfe4e8';
+    g.beginPath(); g.arc(0, 0, R, 0, 6.284); g.fill();
+
+    // promieniste szczotkowanie
+    for (let i = 0; i < 1400; i++) {
+      const a = Math.random() * 6.284;
+      const r0 = Math.random() * R * .96, r1 = r0 + 4 + Math.random() * 40;
+      g.strokeStyle = Math.random() < .5 ? 'rgba(255,255,255,.14)' : 'rgba(0,0,0,.13)';
+      g.lineWidth = .6 + Math.random() * 1.6;
+      g.beginPath();
+      g.moveTo(Math.cos(a) * r0, Math.sin(a) * r0);
+      g.lineTo(Math.cos(a) * r1, Math.sin(a) * r1);
+      g.stroke();
     }
-    const tex = new THREE.CanvasTexture(c);
-    tex.wrapS = THREE.RepeatWrapping;
-    return tex;
+
+    // zagłębienie wieczka
+    const dish = g.createRadialGradient(0, 0, R * .1, 0, 0, R * .92);
+    dish.addColorStop(0, 'rgba(255,255,255,.16)');
+    dish.addColorStop(.72, 'rgba(0,0,0,0)');
+    dish.addColorStop(1, 'rgba(0,0,0,.34)');
+    g.fillStyle = dish; g.beginPath(); g.arc(0, 0, R * .95, 0, 6.284); g.fill();
+
+    // rowek otwierania — kropla wytłoczona w blasze
+    const score = (dx, dy, w, h) => {
+      g.beginPath();
+      g.moveTo(dx, dy - h);
+      g.bezierCurveTo(dx + w, dy - h * .9, dx + w * .95, dy + h * .55, dx, dy + h);
+      g.bezierCurveTo(dx - w * .95, dy + h * .55, dx - w, dy - h * .9, dx, dy - h);
+      g.closePath();
+    };
+    g.save();
+    g.translate(0, R * .22); g.rotate(.1);
+    g.lineWidth = R * .028;
+    g.strokeStyle = 'rgba(0,0,0,.5)';  score(0, 0, R * .30, R * .34); g.stroke();
+    g.lineWidth = R * .014;
+    g.strokeStyle = 'rgba(255,255,255,.5)'; score(-R*.008, -R*.01, R*.30, R*.34); g.stroke();
+    g.restore();
+
+    // zawleczka
+    g.save();
+    g.translate(0, -R * .18); g.rotate(.1);
+    g.fillStyle = 'rgba(200,208,214,.98)';
+    g.strokeStyle = 'rgba(0,0,0,.42)'; g.lineWidth = R * .012;
+    g.beginPath();
+    if (g.roundRect) g.roundRect(-R * .17, -R * .10, R * .34, R * .62, R * .16);
+    else g.rect(-R * .17, -R * .10, R * .34, R * .62);
+    g.fill(); g.stroke();
+    g.globalCompositeOperation = 'destination-out';
+    g.beginPath(); g.ellipse(0, R * .27, R * .10, R * .17, 0, 0, 6.284); g.fill();
+    g.globalCompositeOperation = 'source-over';
+    // nit
+    g.fillStyle = '#cfd6db';
+    g.beginPath(); g.arc(0, R * .02, R * .075, 0, 6.284); g.fill();
+    g.strokeStyle = 'rgba(0,0,0,.45)'; g.lineWidth = R * .012;
+    g.beginPath(); g.arc(0, R * .02, R * .075, 0, 6.284); g.stroke();
+    g.restore();
+
+    const t = new THREE.CanvasTexture(c);
+    t.colorSpace = THREE.SRGBColorSpace;
+    t.anisotropy = 8;
+    return t;
   }
 
   /* --- skórka limonki: drobne wgłębienia ------------------ */
@@ -287,17 +414,22 @@
   const slice   = sliceTexture();
 
   const cherryMat = new THREE.MeshPhysicalMaterial({
-    color: 0x8d0b1c, roughness: .16, metalness: 0,
-    clearcoat: 1, clearcoatRoughness: .05, envMapIntensity: 1.35
+    color: 0x7c0917, roughness: .13, metalness: 0,
+    bumpMap: peel, bumpScale: .0025,              // ledwie wyczuwalna skóra owocu
+    clearcoat: 1, clearcoatRoughness: .035,
+    envMapIntensity: 1.55
   });
+  // jagoda ma nalot woskowy — matowy, jasny welon na ciemnej skórce
   const berryMat = new THREE.MeshPhysicalMaterial({
-    color: 0x2c3277, roughness: .52, metalness: 0,
-    clearcoat: .55, clearcoatRoughness: .35, envMapIntensity: .9
+    color: 0x232a63, roughness: .68, metalness: 0,
+    bumpMap: peel, bumpScale: .006,
+    sheen: 1, sheenColor: new THREE.Color(0xa9bde0), sheenRoughness: .85,
+    clearcoat: .35, clearcoatRoughness: .55, envMapIntensity: .95
   });
   const berryCrownMat = new THREE.MeshStandardMaterial({ color: 0x1a1f4d, roughness: .8 });
   const limeMat = new THREE.MeshPhysicalMaterial({
     color: 0x62b81c, roughness: .55, metalness: 0,
-    bumpMap: peel, bumpScale: .012,
+    bumpMap: peel, bumpScale: .02,
     clearcoat: .7, clearcoatRoughness: .3, envMapIntensity: 1.05
   });
   const sliceMat = new THREE.MeshPhysicalMaterial({
@@ -394,22 +526,47 @@
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
   renderer.toneMappingExposure = 1.05;
 
-  /* --- studio: równoprostokątne otoczenie z softboxami ----- */
+  /* --- studio: otoczenie z sufitem, podłogą i softboxami ---
+     To ono robi cały połysk na blasze i na owocach — im bogatsze,
+     tym mniej „plastikowo" wygląda materiał. --------------- */
   function studioEnv() {
-    const W = 1024, H = 512;
+    const W = 2048, H = 1024;
     const c = document.createElement('canvas');
     c.width = W; c.height = H;
     const g = c.getContext('2d');
+
+    // sufit → horyzont → podłoga
     const bg = g.createLinearGradient(0, 0, 0, H);
-    bg.addColorStop(0, '#42474f'); bg.addColorStop(.5, '#15181c'); bg.addColorStop(1, '#05070a');
+    bg.addColorStop(0,   '#6e747d');
+    bg.addColorStop(.28, '#3a3f47');
+    bg.addColorStop(.5,  '#14171b');
+    bg.addColorStop(.52, '#20242a');
+    bg.addColorStop(1,   '#080a0d');
     g.fillStyle = bg; g.fillRect(0, 0, W, H);
-    for (const [x, w, a] of [[W*.14, W*.10, 1], [W*.52, W*.06, .75], [W*.82, W*.08, .6]]) {
+
+    // ciepły klucz z lewej, chłodne wypełnienie z prawej
+    for (const [x, w, top, hgt, col, a] of [
+      [W*.13, W*.075, H*.05, H*.52, '255,248,235', 1],
+      [W*.34, W*.030, H*.12, H*.34, '255,255,255', .5],
+      [W*.55, W*.055, H*.08, H*.44, '226,238,255', .8],
+      [W*.83, W*.045, H*.14, H*.36, '210,226,255', .55]
+    ]) {
       const lg = g.createLinearGradient(x - w, 0, x + w, 0);
-      lg.addColorStop(0, 'rgba(255,255,255,0)');
-      lg.addColorStop(.5, `rgba(255,255,255,${a})`);
-      lg.addColorStop(1, 'rgba(255,255,255,0)');
-      g.fillStyle = lg; g.fillRect(x - w, H*.06, w*2, H*.62);
+      lg.addColorStop(0,  `rgba(${col},0)`);
+      lg.addColorStop(.5, `rgba(${col},${a})`);
+      lg.addColorStop(1,  `rgba(${col},0)`);
+      g.fillStyle = lg;
+      const vg = g.createLinearGradient(0, top, 0, top + hgt);
+      vg.addColorStop(0, 'rgba(0,0,0,1)'); vg.addColorStop(1, 'rgba(0,0,0,1)');
+      g.fillRect(x - w, top, w * 2, hgt);
     }
+
+    // odblask podłogi pod puszką
+    const fg = g.createRadialGradient(W*.5, H*.62, 0, W*.5, H*.62, W*.3);
+    fg.addColorStop(0, 'rgba(255,255,255,.22)');
+    fg.addColorStop(1, 'rgba(255,255,255,0)');
+    g.fillStyle = fg; g.fillRect(0, H*.5, W, H*.5);
+
     const tex = new THREE.CanvasTexture(c);
     tex.mapping = THREE.EquirectangularReflectionMapping;
     const pmrem = new THREE.PMREMGenerator(renderer);
@@ -440,14 +597,16 @@
 
   const labels = {};
   Object.keys(FLAVORS).forEach(k => { labels[k] = labelTexture(k); });
-  const rough = dropletRoughness();
+  const drops = dropletMaps();
 
   const bodyMat = new THREE.MeshPhysicalMaterial({
     map: labels.cherry,
-    roughnessMap: rough,
-    roughness: .5, metalness: .05,
-    clearcoat: 1, clearcoatRoughness: .1,
-    envMapIntensity: 1.15
+    roughnessMap: drops.rough,
+    normalMap: drops.normal,
+    normalScale: new THREE.Vector2(.85, .85),
+    roughness: .62, metalness: .04,
+    clearcoat: 1, clearcoatRoughness: .06,
+    envMapIntensity: 1.25
   });
   const body = new THREE.Mesh(
     new THREE.CylinderGeometry(R, R, TOP - BOT, 180, 1, true),
@@ -456,8 +615,13 @@
   can.add(body);
 
   const metalMat = new THREE.MeshPhysicalMaterial({
-    color: 0xe2e7ec, metalness: 1, roughness: .22,
-    envMapIntensity: 1.8, side: THREE.DoubleSide
+    color: 0xe6ebef, metalness: 1, roughness: .22,
+    anisotropy: .5, anisotropyRotation: Math.PI / 2,    // szczotkowanie wzdłuż obwodu
+    envMapIntensity: 2.1, side: THREE.DoubleSide
+  });
+  const lidMat = new THREE.MeshPhysicalMaterial({
+    map: lidTexture(), metalness: 1, roughness: .26,
+    anisotropy: .5, envMapIntensity: 2.1
   });
 
   const lathe = (pts) => new THREE.LatheGeometry(
@@ -477,6 +641,12 @@
     [R*.808, BOT-.093   ], [R*.678, BOT-.100], [R*.50,  BOT-.082], [R*.28, BOT-.069],
     [0,      BOT-.067   ]
   ]), metalMat));
+
+  // tarcza wieczka z rowkiem i zawleczką, tuż nad płaskim dnem lathe'a
+  const lid = new THREE.Mesh(new THREE.CircleGeometry(R * .70, 72), lidMat);
+  lid.rotation.x = -Math.PI / 2;
+  lid.position.y = TOP + .1245;
+  can.add(lid);
 
   can.rotation.z = -0.26;
   can.rotation.x =  0.06;
@@ -566,7 +736,7 @@
     // etykieta zmienia się w połowie obrotu, kiedy jest odwrócona tyłem
     setTimeout(() => { bodyMat.map = labels[name]; bodyMat.needsUpdate = true; }, 320);
   }
-  window.NULA3D = { setFlavor };
+  window.NULA3D = { setFlavor, can, camera, scene };   // przydatne przy podglądzie bryły
 
   /* =========================================================
      6. Pętla i rozmiar
