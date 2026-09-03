@@ -607,11 +607,14 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
     clearcoat: 1, clearcoatRoughness: .08,
     envMapIntensity: 1.2
   });
-  const body = new THREE.Mesh(
+  // Bryła proceduralna leci od razu, żeby coś było na ekranie, i zostaje
+  // jako zapas, gdyby model z generatora się nie wczytał.
+  const shell = new THREE.Group();
+  can.add(shell);
+  shell.add(new THREE.Mesh(
     new THREE.CylinderGeometry(R, R, TOP - BOT, 180, 1, true),
     bodyMat
-  );
-  can.add(body);
+  ));
 
   const metalMat = new THREE.MeshPhysicalMaterial({
     color: 0xe6ebef, metalness: 1, roughness: .22,
@@ -631,7 +634,7 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
   // korpus trzyma pion do ~89% wysokości i dopiero tam się załamuje,
   // a rant ROZSZERZA SIĘ z powrotem — to zawinięcie blachy. Poprzedni obrys
   // zwężał się monotonicznie i przez to wyglądał jak zaokrąglony walec.
-  can.add(new THREE.Mesh(lathe([
+  shell.add(new THREE.Mesh(lathe([
     [R,      TOP       ], [R*.998, TOP+.030], [R*.985, TOP+.055], [R*.945, TOP+.080],
     [R*.880, TOP+.100  ], [R*.826, TOP+.116], [R*.802, TOP+.128], [R*.818, TOP+.140],
     [R*.845, TOP+.150  ], [R*.842, TOP+.161], [R*.800, TOP+.163], [R*.770, TOP+.152],
@@ -639,7 +642,7 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
   ]), metalMat));
 
   // denko: zaokrąglenie na dolnych ~4% wysokości, potem kopuła do środka
-  can.add(new THREE.Mesh(lathe([
+  shell.add(new THREE.Mesh(lathe([
     [R,      BOT       ], [R*.995, BOT-.020], [R*.965, BOT-.042], [R*.905, BOT-.060],
     [R*.830, BOT-.072  ], [R*.800, BOT-.078], [R*.700, BOT-.070], [R*.45,  BOT-.048],
     [R*.20,  BOT-.036  ], [0,      BOT-.034]
@@ -660,7 +663,7 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
     envMapIntensity: 3.2
   });
   const water = new THREE.Mesh(
-    new THREE.CylinderGeometry(R * 1.004, R * 1.004, TOP - BOT, 180, 1, true),
+    new THREE.CylinderGeometry(R * 1.016, R * 1.016, TOP - BOT, 180, 1, true),
     waterMat
   );
   can.add(water);
@@ -684,12 +687,12 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
   for (let i = 0; i < 9; i++) {
     const g = new THREE.Group();                 // obrót grupy = kąt na obwodzie
     const head = new THREE.Mesh(SPHERE, dropMat);
-    head.position.z = R * 1.016;
+    head.position.z = R * 1.026;
     head.scale.set(.04, .058, .018);
     g.add(head);
 
     const tail = new THREE.Mesh(SPHERE, trailMat);
-    tail.position.set(0, .085, R * 1.011);
+    tail.position.set(0, .085, R * 1.021);
     tail.scale.set(.015, .085, .009);
     g.add(tail);
 
@@ -703,7 +706,152 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
   const lid = new THREE.Mesh(new THREE.CircleGeometry(R * .74, 72), lidMat);
   lid.rotation.x = -Math.PI / 2;
   lid.position.y = TOP + .1478;
-  can.add(lid);
+  shell.add(lid);
+
+  /* =========================================================
+     Puszka z modelu (media/models/can.glb)
+
+     Model przyszedł BEZ tekstur i bez sensownych UV, więc współrzędne
+     liczę sam rzutem walcowym: u z kąta wokół osi, v z wysokości.
+     Front (+Z) musi wypaść na środku frontu etykiety — stąd +0.25
+     w kącie, bo sama tekstura ma jeszcze offset 0.25.
+
+     Trójkąty przecinające szew mają u skaczące z ~0.99 na ~0.01 i bez
+     poprawki rozmazałyby całą etykietę wstecz. Wierzchołki po niższej
+     stronie dubluję z u+1 (tekstura się zawija, więc to legalne).
+
+     Podział na materiały idzie po wysokości: korpus dostaje etykietę,
+     szyjka i denko blachę. Progi wzięte z profilu — dno zaokrągla się
+     do 4,8% wysokości, bark zaczyna się na 88,5%.
+     ========================================================= */
+  function cylindricalUV(geo) {
+    const pos = geo.attributes.position;
+    let y0 = Infinity, y1 = -Infinity;
+    for (let i = 0; i < pos.count; i++) {
+      const y = pos.getY(i);
+      if (y < y0) y0 = y;
+      if (y > y1) y1 = y;
+    }
+    const h = (y1 - y0) || 1;
+    const uv = new Float32Array(pos.count * 2);
+    for (let i = 0; i < pos.count; i++) {
+      // kąt LICZONY W MINUS: przy dodatnim napis wychodzi odbity lustrzanie,
+      // bo patrzymy na walec od zewnątrz. Stała 0.75 sadza front (+Z) na 0.5,
+      // a offset 0.25 samej tekstury dosuwa go na środek frontu etykiety.
+      let u = -Math.atan2(pos.getZ(i), pos.getX(i)) / (Math.PI * 2) + .75;
+      u -= Math.floor(u);
+      uv[i * 2]     = u;
+      uv[i * 2 + 1] = (pos.getY(i) - y0) / h;
+    }
+    geo.setAttribute('uv', new THREE.BufferAttribute(uv, 2));
+  }
+
+  function fixSeam(geo) {
+    const idx = Array.from(geo.index.array);
+    const pos = geo.attributes.position;
+    const nor = geo.attributes.normal;
+    const uv  = geo.attributes.uv;
+
+    const addPos = [], addNor = [], addUv = [], copy = new Map();
+    let next = pos.count;
+
+    for (let t = 0; t < idx.length; t += 3) {
+      const u = [uv.getX(idx[t]), uv.getX(idx[t+1]), uv.getX(idx[t+2])];
+      if (Math.max(...u) - Math.min(...u) <= .5) continue;
+      for (let k = 0; k < 3; k++) {
+        const vi = idx[t + k];
+        if (uv.getX(vi) >= .5) continue;
+        let ni = copy.get(vi);
+        if (ni === undefined) {
+          ni = next++;
+          copy.set(vi, ni);
+          addPos.push(pos.getX(vi), pos.getY(vi), pos.getZ(vi));
+          if (nor) addNor.push(nor.getX(vi), nor.getY(vi), nor.getZ(vi));
+          addUv.push(uv.getX(vi) + 1, uv.getY(vi));
+        }
+        idx[t + k] = ni;
+      }
+    }
+    if (!addPos.length) { geo.setIndex(new THREE.BufferAttribute(new Uint32Array(idx), 1)); return; }
+
+    const grow = (attr, extra, size) => {
+      const out = new Float32Array(attr.count * size + extra.length);
+      out.set(attr.array.subarray(0, attr.count * size), 0);
+      out.set(extra, attr.count * size);
+      return new THREE.BufferAttribute(out, size);
+    };
+    geo.setAttribute('position', grow(pos, addPos, 3));
+    if (nor) geo.setAttribute('normal', grow(nor, addNor, 3));
+    geo.setAttribute('uv', grow(uv, addUv, 2));
+    geo.setIndex(new THREE.BufferAttribute(new Uint32Array(idx), 1));
+  }
+
+  // loV/hiV = zakres korpusu (etykieta), cutV = wysokość, powyżej której
+  // geometria modelu leci do kosza. Generator zrobił wieczko jako kopułę
+  // WYSTAJĄCĄ ponad rant, zamiast płaskiego, wpuszczonego lidu — wygląda to
+  // jak blob, więc górę odcinam i zastępuję własnym rantem z zawleczką.
+  function splitByHeight(geo, loV, hiV, cutV) {
+    const idx = geo.index.array, uv = geo.attributes.uv;
+    const label = [], metal = [];
+    for (let t = 0; t < idx.length; t += 3) {
+      const a = idx[t], b = idx[t+1], c = idx[t+2];
+      const v = [uv.getY(a), uv.getY(b), uv.getY(c)];
+      if (Math.max(...v) > cutV) continue;
+      const dst = (Math.min(...v) >= loV && Math.max(...v) <= hiV) ? label : metal;
+      dst.push(a, b, c);
+    }
+    geo.setIndex(new THREE.BufferAttribute(new Uint32Array(label.concat(metal)), 1));
+    geo.clearGroups();
+    geo.addGroup(0, label.length, 0);
+    geo.addGroup(label.length, metal.length, 1);
+  }
+
+  new GLTFLoader().load('media/models/can.glb', gltf => {
+    let src = null;
+    gltf.scene.traverse(o => { if (o.isMesh && !src) src = o; });
+    if (!src) return;
+
+    const geo = src.geometry.index ? src.geometry : src.geometry.toNonIndexed();
+    if (!geo.index) {
+      const n = geo.attributes.position.count;
+      geo.setIndex(new THREE.BufferAttribute(new Uint32Array([...Array(n).keys()]), 1));
+    }
+    cylindricalUV(geo);
+    fixSeam(geo);
+    splitByHeight(geo, .048, .892, .963);
+    geo.computeBoundingBox();
+
+    const mesh = new THREE.Mesh(geo, [bodyMat, metalMat]);
+
+    // Skalowanie nierównomierne: model jest smuklejszy (H/D 2,3) niż puszka,
+    // o którą prosił Dawid (1,74), więc poziom rozciągam mocniej niż pion.
+    const b = geo.boundingBox;
+    const size = b.getSize(new THREE.Vector3());
+    const mid  = b.getCenter(new THREE.Vector3());
+    const hTarget = (TOP + .163) - (BOT - .078);
+    mesh.scale.set(2 * R / size.x, hTarget / size.y, 2 * R / size.z);
+    mesh.position.set(
+      -mid.x * (2 * R / size.x),
+      ((TOP + .163) + (BOT - .078)) / 2 - mid.y * (hTarget / size.y),
+      -mid.z * (2 * R / size.z)
+    );
+
+    shell.visible = false;          // proceduralny zapas schodzi ze sceny
+    can.add(mesh);
+
+    // rant i wieczko w miejsce odciętej kopuły; wysokości są bezwzględne,
+    // dobrane do miejsca cięcia modelu (v = 0.963 wypada na y ≈ 0.849)
+    const cap = new THREE.Mesh(lathe([
+      [R*.803, .849], [R*.815, .858], [R*.838, .868], [R*.846, .877],
+      [R*.843, .886], [R*.815, .891], [R*.790, .883], [R*.780, .8705]
+    ]), metalMat);
+    can.add(cap);
+
+    lid.position.y = .8685;
+    lid.scale.setScalar(.79 / .74);   // tarcza wieczka pod wewnętrzną krawędź rantu
+    lid.visible = true;
+    can.add(lid);                     // zabieramy ją z ukrytej grupy zapasowej
+  }, undefined, () => { /* bez modelu zostaje bryła proceduralna */ });
 
   can.rotation.z = -0.26;
   can.rotation.x =  0.06;
