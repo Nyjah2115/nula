@@ -13,26 +13,27 @@
   /* --- teksty zmieniane razem ze smakiem ------------------ */
   const COPY = {
     cherry: {
+      no: '01', flavour: 'Wiśnia', juice: '4%',
       text: 'Bąbelki, zimna woda źródlana i wyciśnięta wiśnia. Bez cukru, ' +
-            'bez słodzików, bez barwników — 0 kcal w każdej puszce.',
-      note: '330 ml · 0 g cukru · 0 kcal · 4% soku z wiśni'
+            'bez słodzików, bez barwników — 0 kcal w każdej puszce.'
     },
     blueberry: {
+      no: '02', flavour: 'Jagoda', juice: '3%',
       text: 'Bąbelki, zimna woda źródlana i leśna jagoda. Bez cukru, ' +
-            'bez słodzików, bez barwników — 0 kcal w każdej puszce.',
-      note: '330 ml · 0 g cukru · 0 kcal · 3% soku z jagód'
+            'bez słodzików, bez barwników — 0 kcal w każdej puszce.'
     },
     lime: {
+      no: '03', flavour: 'Limonka', juice: '5%',
       text: 'Bąbelki, zimna woda źródlana i wyciśnięta limonka. Bez cukru, ' +
-            'bez słodzików, bez barwników — 0 kcal w każdej puszce.',
-      note: '330 ml · 0 g cukru · 0 kcal · 5% soku z limonki'
+            'bez słodzików, bez barwników — 0 kcal w każdej puszce.'
     }
   };
 
-  const slots = {
-    text: document.querySelector('[data-copy="text"]'),
-    note: document.querySelector('[data-copy="note"]')
-  };
+  // pola podmieniane przy zmianie smaku: numer, nazwa, opis, udział soku
+  const slots = {};
+  ['text', 'no', 'flavour', 'juice'].forEach(k => {
+    slots[k] = document.querySelector(`[data-copy="${k}"]`);
+  });
 
   function setFlavor(name) {
     if (body.dataset.flavor === name) return;
@@ -99,10 +100,8 @@
     sections.forEach(s => io.observe(s));
   }
 
-  /* --- parallaksa hero: puszka i napis rozjeżdżają się ----- */
+  /* --- parallaksa hero: puszka odjeżdża przy scrollu -------- */
   const hero = document.querySelector('.hero');
-  const script = document.querySelector('.hero__script');
-
   if (hero && !reduce) {
     let ticking = false;
     const onScroll = () => {
@@ -113,8 +112,6 @@
         const p = Math.min(1, Math.max(0, window.scrollY / h));   // 0 → 1 przez pierwszy ekran
         hero.style.setProperty('--canY', (-p * 130) + 'px');
         hero.style.setProperty('--canScale', (1 + p * 0.14).toFixed(3));
-        hero.style.setProperty('--scriptY', (p * 90) + 'px');
-        if (script) script.style.opacity = String(1 - p * 0.85);
         ticking = false;
       });
     };

@@ -968,12 +968,17 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
   /* =========================================================
      6. Pętla i rozmiar
      ========================================================= */
+  // Na szerokim ekranie puszka stoi w prawej części kadru — treść ma wtedy
+  // całą lewą kolumnę dla siebie. Wąsko wraca na środek, bo tam układ
+  // przechodzi na jedną kolumnę.
+  let shiftX = 0;
   function resize() {
     const w = hero.clientWidth, h = hero.clientHeight;
     renderer.setSize(w, h, false);
     camera.aspect = w / h;
     camera.position.z = w / h < 1 ? 6.6 : 4.6;
     camera.updateProjectionMatrix();
+    shiftX = w / h > 1.15 ? .58 : 0;
   }
   window.addEventListener('resize', resize);
 
@@ -997,11 +1002,13 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 
     can.rotation.y = state.angle + state.hover;
     can.rotation.x = 0.06 + state.pitch;
+    can.position.x = shiftX;
     can.position.y = Math.sin(now / 1400) * .05 - state.scroll * 1.1;
     can.scale.setScalar(0.63 * (1 + state.scroll * .12));
 
     // owoce dryfują razem z puszką, ale wolniej — inaczej scena wygląda sztywno
     orbit.rotation.y = state.angle * .35 + state.hover * .5;
+    orbit.position.x = shiftX;
     orbit.position.y = -state.scroll * .7;
 
     // komplet owoców aktywnego smaku wyrasta, pozostałe znikają

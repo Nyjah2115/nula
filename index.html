@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Yellowtail&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/style.css?v=12">
+<link rel="stylesheet" href="css/style.css?v=14">
 </head>
 <body data-flavor="cherry">
 
@@ -40,10 +40,7 @@
   <section class="hero" id="hero">
     <div class="hero__sky" aria-hidden="true"></div>
 
-    <h2 class="hero__script" aria-hidden="true">
-      <span>Orzeźwiająco</span>
-      <span>Czysty</span>
-    </h2>
+    <p class="hero__edge" aria-hidden="true">Orzeźwiająco czysty</p>
 
     <div class="hero__cans" aria-hidden="true">
       <img class="can is-on" data-flavor="cherry"    src="media/can-cherry.png"    alt="">
@@ -52,52 +49,78 @@
     </div>
 
     <div class="hero__grid">
-
       <div class="lede">
-        <h1 class="lede__title">Czyste<br>Zero</h1>
+        <p class="lede__index">
+          <span data-copy="no">01</span>
+          <i aria-hidden="true"></i>
+          <span data-copy="flavour">Wiśnia</span>
+        </p>
+
+        <h1 class="lede__title">Czyste<br><em>Zero</em></h1>
+
         <p class="lede__text" data-copy="text">
-          Bąbelki, zimna woda źródlana i wyciśnięty owoc. Bez cukru,
+          Bąbelki, zimna woda źródlana i wyciśnięta wiśnia. Bez cukru,
           bez słodzików, bez barwników — 0&nbsp;kcal w każdej puszce.
         </p>
+
         <a class="lede__cta" href="#sklep">
           <span>Poznaj smak</span>
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h15m0 0-6-6m6 6-6 6"/></svg>
         </a>
+
+        <dl class="lede__stats">
+          <div><dt>Pojemność</dt><dd>330 ml</dd></div>
+          <div><dt>Kalorie</dt><dd>0 kcal</dd></div>
+          <div><dt>Cukier</dt><dd>0 g</dd></div>
+          <div><dt>Sok</dt><dd data-copy="juice">4%</dd></div>
+        </dl>
       </div>
+    </div>
 
-      <div class="rail">
-        <p class="rail__label">Wybierz smak</p>
+    <div class="picker">
+      <div class="picker__box">
+        <p class="picker__label">Wybierz smak</p>
 
+        <div class="picker__row">
         <button class="chip is-on" data-flavor="cherry" type="button">
+          <span class="chip__wash" aria-hidden="true"></span>
           <span class="chip__shot"><img src="media/thumb-cherry.png" alt="Puszka NULA o smaku wiśniowym"></span>
           <span class="chip__meta">
             <strong>Wiśnia</strong>
             <em>0 kcal · 330 ml</em>
           </span>
+          <span class="chip__go" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path d="M4 12h15m0 0-6-6m6 6-6 6"/></svg>
+          </span>
         </button>
 
         <button class="chip" data-flavor="blueberry" type="button">
+          <span class="chip__wash" aria-hidden="true"></span>
           <span class="chip__shot"><img src="media/thumb-blueberry.png" alt="Puszka NULA o smaku jagodowym"></span>
           <span class="chip__meta">
             <strong>Jagoda</strong>
             <em>0 kcal · 330 ml</em>
           </span>
+          <span class="chip__go" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path d="M4 12h15m0 0-6-6m6 6-6 6"/></svg>
+          </span>
         </button>
 
         <button class="chip" data-flavor="lime" type="button">
+          <span class="chip__wash" aria-hidden="true"></span>
           <span class="chip__shot"><img src="media/thumb-lime.png" alt="Puszka NULA o smaku limonkowym"></span>
           <span class="chip__meta">
             <strong>Limonka</strong>
             <em>0 kcal · 330 ml</em>
           </span>
+          <span class="chip__go" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path d="M4 12h15m0 0-6-6m6 6-6 6"/></svg>
+          </span>
         </button>
+        </div>
       </div>
 
-    </div>
-
-    <div class="hero__foot">
       <span class="scrollhint"><i aria-hidden="true"></i> Przewiń</span>
-      <p class="ticker" data-copy="note">330 ml · 0 g cukru · 0 kcal · bez konserwantów</p>
     </div>
   </section>
 
@@ -240,7 +263,7 @@
   }
 }
 </script>
-<script type="module" src="js/can3d.js?v=29"></script>
-<script src="js/main.js?v=3"></script>
+<script type="module" src="js/can3d.js?v=30"></script>
+<script src="js/main.js?v=4"></script>
 </body>
 </html>

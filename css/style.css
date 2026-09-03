@@ -113,7 +113,7 @@ button{ font:inherit; color:inherit; background:none; border:0; cursor:pointer; 
   position:relative;
   min-height:100svh;
   display:flex; flex-direction:column; justify-content:center;
-  padding:120px clamp(18px,3.4vw,44px) 96px;
+  padding:120px clamp(18px,3.4vw,44px) clamp(150px,26vh,240px);
   overflow:hidden;
 }
 
@@ -133,19 +133,16 @@ button{ font:inherit; color:inherit; background:none; border:0; cursor:pointer; 
 }
 @keyframes breathe{ 0%,100%{ transform:scale(1); opacity:.75 } 50%{ transform:scale(1.09); opacity:1 } }
 
-/* wielki skrypt — leży POD puszką, dlatego napis chowa się za nią */
-.hero__script{
-  position:absolute; z-index:1; left:50%; top:59%;
-  transform:translate(-50%,-50%) translateY(var(--scriptY,0px));
-  margin:0; text-align:center; pointer-events:none;
-  font-family:"Yellowtail",cursive; font-weight:400;
-  font-size:clamp(54px,8.8vw,152px); line-height:.84;
-  letter-spacing:.01em; white-space:nowrap;
-  color:rgba(255,255,255,.97);
-  text-shadow:0 26px 70px rgba(0,0,0,.45);
+/* podpis pionowy przy lewej krawędzi — zastępuje wielki skrypt za puszką */
+.hero__edge{
+  position:absolute; z-index:3; top:50%;
+  left:clamp(8px,1.4vw,20px);
+  transform:translateY(-50%);
+  writing-mode:vertical-rl; rotate:180deg;
+  margin:0; pointer-events:none;
+  font-size:10px; letter-spacing:.34em; text-transform:uppercase;
+  color:var(--muted); white-space:nowrap;
 }
-.hero__script span{ display:block; }
-.hero__script span:last-child{ margin-left:3.1em; }
 
 .hero__cans{
   position:absolute; inset:0; z-index:2; pointer-events:none;
@@ -153,7 +150,7 @@ button{ font:inherit; color:inherit; background:none; border:0; cursor:pointer; 
 .can{
   position:absolute; inset:0; margin:auto;
   width:100%; height:100%;
-  object-fit:contain; object-position:center 48%;
+  object-fit:contain; object-position:72% 46%;
   opacity:0; transform:scale(1.02);
   transition:opacity .85s var(--ease), transform .85s var(--ease);
   will-change:transform,opacity;
@@ -168,23 +165,45 @@ button{ font:inherit; color:inherit; background:none; border:0; cursor:pointer; 
   50%    { translate:0 -16px }
 }
 
+/* Układ jest celowo asymetryczny: treść w lewej kolumnie, puszka po prawej,
+   wybór smaku poziomym paskiem u dołu. Wcześniej wszystko było wyśrodkowane
+   wokół puszki, z pionową listą smaków po prawej — za blisko wzoru. */
 .hero__grid{
   position:relative; z-index:3;
-  display:grid; grid-template-columns:minmax(0,300px) 1fr minmax(0,300px);
-  align-items:center; gap:32px;
   width:var(--shell); margin:0 auto;
+  display:grid; grid-template-columns:minmax(300px,44%) 1fr;
+  align-items:center;
 }
 
-/* lewa kolumna */
+.lede{ grid-column:1; max-width:30rem; }
+
+.lede__index{
+  display:flex; align-items:center; gap:12px;
+  margin:0 0 20px;
+  font-size:11px; font-weight:600; letter-spacing:.24em; text-transform:uppercase;
+}
+.lede__index i{ flex:0 0 46px; height:1px; background:var(--accent); transition:background var(--slow); }
+.lede__index span:first-child{ color:var(--accent); transition:color var(--slow); }
+.lede__index span:last-child{ color:var(--muted); }
+
 .lede__title{
-  margin:0 0 18px;
-  font-family:"Yellowtail",cursive; font-weight:400;
-  font-size:clamp(52px,5.6vw,88px); line-height:.86; letter-spacing:.01em;
+  margin:0 0 22px;
+  font-size:clamp(52px,6.6vw,104px); line-height:.92;
+  font-weight:800; letter-spacing:-.045em; text-transform:uppercase;
 }
+.lede__title em{
+  display:block; margin-top:-.12em; margin-left:.06em;
+  font-family:"Yellowtail",cursive; font-style:normal; font-weight:400;
+  font-size:1.06em; letter-spacing:0; text-transform:none;
+  color:var(--accent);
+  transition:color var(--slow);
+}
+
 .lede__text{
-  margin:0 0 26px; max-width:31ch;
-  font-size:14.5px; line-height:1.72; color:var(--muted);
+  margin:0 0 30px; max-width:34ch;
+  font-size:15px; line-height:1.75; color:var(--muted);
 }
+
 .lede__cta{
   display:inline-flex; align-items:center; gap:12px;
   padding:13px 14px 13px 24px; border-radius:999px;
@@ -200,39 +219,110 @@ button{ font:inherit; color:inherit; background:none; border:0; cursor:pointer; 
   transition:background var(--slow);
 }
 
-/* prawa kolumna — wybór smaku */
-.rail{ grid-column:3; justify-self:end; width:100%; display:flex; flex-direction:column; gap:10px; }
-.rail__label{
-  margin:0 0 4px; font-size:10.5px; font-weight:600;
+.lede__stats{
+  display:flex; flex-wrap:wrap; gap:28px;
+  margin:38px 0 0; padding-top:22px;
+  border-top:1px solid var(--line);
+}
+.lede__stats dt{
+  font-size:10px; letter-spacing:.18em; text-transform:uppercase; color:var(--muted);
+}
+.lede__stats dd{ margin:6px 0 0; font-size:17px; font-weight:600; letter-spacing:-.01em; }
+
+/* ---------------------------------------------------------
+   Wybór smaku — poziomy pasek u dołu
+   --------------------------------------------------------- */
+.picker{
+  position:absolute; z-index:3; left:50%; bottom:clamp(22px,4.2vh,50px);
+  transform:translateX(-50%);
+  width:var(--shell);
+  display:flex; align-items:flex-end; justify-content:space-between;
+  gap:clamp(16px,2.4vw,34px);
+}
+.picker__box{ display:flex; flex-direction:column; gap:12px; }
+.picker__label{
+  margin:0;
+  font-size:10.5px; font-weight:600;
   letter-spacing:.24em; text-transform:uppercase; color:var(--muted);
 }
+.picker__row{ display:flex; gap:clamp(8px,1vw,14px); }
+
 .chip{
-  display:flex; align-items:center; gap:14px;
-  padding:10px 16px 10px 10px; border-radius:20px; text-align:left;
+  position:relative; overflow:hidden; isolation:isolate;
+  width:clamp(116px,11.5vw,164px);
+  padding:14px 16px 16px; text-align:left;
+  border-radius:22px;
   background:var(--glass); border:1px solid var(--line);
   backdrop-filter:blur(14px); -webkit-backdrop-filter:blur(14px);
-  transition:border-color .45s var(--ease), background .45s var(--ease), transform .45s var(--ease);
+  transition:transform .5s var(--ease), border-color .5s var(--ease),
+             background .5s var(--ease), box-shadow .5s var(--ease);
 }
-.chip:hover{ transform:translateX(-4px); background:rgba(255,255,255,.12); }
-.chip.is-on{ border-color:rgba(255,255,255,.5); background:rgba(255,255,255,.15); }
+.chip[data-flavor="cherry"]   { --chipColor:#e2374d; }
+.chip[data-flavor="blueberry"]{ --chipColor:#8b6bff; }
+.chip[data-flavor="lime"]     { --chipColor:#f2e14b; }
+
+/* kolor smaku wjeżdża od dołu przy najeździe */
+.chip__wash{
+  position:absolute; inset:0; z-index:-1; pointer-events:none;
+  background:linear-gradient(0deg, var(--chipColor) 0%, transparent 82%);
+  opacity:0; transform:translateY(42%);
+  transition:opacity .55s var(--ease), transform .55s var(--ease);
+}
+
 .chip__shot{
-  flex:0 0 auto; width:54px; height:64px;
-  display:grid; place-items:center; border-radius:14px;
-  background:rgba(0,0,0,.22); overflow:hidden;
+  position:relative; display:block;
+  width:100%; height:74px; margin-bottom:12px;
+  border-radius:14px; overflow:hidden;
+  background:rgba(0,0,0,.22);
 }
-.chip__shot img{ width:150%; max-width:none; }
+.chip__shot img{
+  position:absolute; top:50%; left:50%;
+  width:auto; height:172%; max-width:none;
+  transform:translate(-50%,-50%);
+  transition:transform .6s var(--ease), filter .6s var(--ease);
+}
+
 .chip__meta{ display:flex; flex-direction:column; gap:3px; }
 .chip__meta strong{ font-size:14.5px; font-weight:600; }
 .chip__meta em{ font-style:normal; font-size:11.5px; color:var(--muted); }
 
-/* stopka hero */
-.hero__foot{
-  position:relative; z-index:3;
-  width:var(--shell); margin:56px auto 0;
-  display:flex; align-items:center; justify-content:space-between; gap:20px;
-  font-size:11.5px; letter-spacing:.16em; text-transform:uppercase; color:var(--muted);
+.chip__go{
+  position:absolute; right:14px; bottom:16px;
+  width:26px; height:26px; border-radius:50%;
+  display:grid; place-items:center;
+  background:#fff;
+  opacity:0; transform:translateX(-8px) scale(.7);
+  transition:opacity .45s var(--ease), transform .45s var(--ease);
 }
-.scrollhint{ display:inline-flex; align-items:center; gap:10px; }
+.chip__go svg{ width:14px; height:14px; stroke:#0b0b0b; stroke-width:2.4; fill:none;
+  stroke-linecap:round; stroke-linejoin:round; }
+
+.chip:hover{
+  transform:translateY(-12px);
+  border-color:rgba(255,255,255,.5);
+  box-shadow:0 26px 50px rgba(0,0,0,.45);
+}
+.chip:hover .chip__wash{ opacity:.55; transform:translateY(0); }
+.chip:hover .chip__shot img{
+  transform:translate(-50%,-58%) scale(1.16) rotate(-6deg);
+  filter:drop-shadow(0 18px 24px rgba(0,0,0,.55));
+}
+.chip:hover .chip__go{ opacity:1; transform:none; }
+.chip:focus-visible{ outline:2px solid #fff; outline-offset:3px; }
+
+.chip.is-on{ border-color:rgba(255,255,255,.55); background:rgba(255,255,255,.15); }
+.chip.is-on .chip__wash{ opacity:.3; transform:translateY(16%); }
+.chip.is-on .chip__shot img{ animation:chipFloat 4.5s ease-in-out infinite; }
+@keyframes chipFloat{
+  0%,100%{ translate:0 0 }
+  50%    { translate:0 -6px }
+}
+
+.scrollhint{
+  margin:0 0 18px; flex:0 0 auto;
+  display:inline-flex; align-items:center; gap:10px;
+  font-size:11px; letter-spacing:.16em; text-transform:uppercase; color:var(--muted);
+}
 .scrollhint i{
   width:1px; height:26px; background:rgba(255,255,255,.4); position:relative; overflow:hidden;
 }
@@ -241,7 +331,6 @@ button{ font:inherit; color:inherit; background:none; border:0; cursor:pointer; 
   animation:drop 2.2s var(--ease) infinite;
 }
 @keyframes drop{ 0%{ transform:translateY(-100%) } 60%,100%{ transform:translateY(100%) } }
-.ticker{ margin:0; }
 
 /* ---------------------------------------------------------
    Sekcje wspólne
@@ -385,41 +474,31 @@ button{ font:inherit; color:inherit; background:none; border:0; cursor:pointer; 
    Węższe ekrany
    --------------------------------------------------------- */
 @media (max-width:1080px){
-  /* układ pionowy: nagłówek → puszka z napisem → wybór smaku */
-  .hero{ justify-content:flex-start; padding-top:104px; }
-  .hero__grid{ grid-template-columns:1fr; gap:0; }
-
-  .lede{ grid-column:1; order:1; text-align:center; }
-  .lede__text{ margin-inline:auto; max-width:34ch; }
+  /* wąsko: treść nad puszką, pasek smaków pod nią */
+  .hero{ justify-content:flex-start; padding:104px 16px 40px; }
+  .hero__grid{ grid-template-columns:1fr; }
+  .lede{ grid-column:1; max-width:none; text-align:center; }
+  .lede__index{ justify-content:center; }
+  .lede__text{ margin-inline:auto; }
+  .lede__stats{ justify-content:center; }
+  .hero__edge{ display:none; }
 
   .hero__cans{
     inset:auto 0 auto 0;
-    top:clamp(272px,36vh,340px); height:clamp(300px,42vh,430px);
+    top:clamp(300px,40vh,380px); height:clamp(280px,38vh,400px);
   }
   .can{ object-fit:cover; object-position:center; }
 
-  .hero__script{
-    top:auto; bottom:auto;
-    transform:translate(-50%,0) translateY(var(--scriptY,0px));
-    margin-top:clamp(382px,50vh,500px);
-    font-size:clamp(40px,11.5vw,74px);
+  .picker{
+    position:static; transform:none; width:100%;
+    margin-top:clamp(300px,40vh,420px);
+    flex-direction:column; align-items:stretch; gap:12px;
   }
-  .hero__script span:last-child{ margin-left:1.1em; }
-
-  .rail{
-    grid-column:1; order:2; justify-self:stretch; width:100%;
-    flex-direction:row; gap:8px;
-    margin-top:clamp(310px,41vh,430px);
-  }
-  .rail__label{ display:none; }
-  .chip{ flex:1 1 0; min-width:0; flex-direction:column; gap:8px; padding:10px 8px 12px; text-align:center; }
-  .chip:hover{ transform:translateY(-3px); }
-  .chip__shot{ position:relative; width:100%; height:76px; border-radius:14px; }
-  .chip__shot img{
-    position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
-    width:auto; height:132%; max-width:none;
-  }
-  .chip__meta{ align-items:center; }
+  .picker__box{ gap:10px; }
+  .picker__label{ margin:0; text-align:center; }
+  .picker__row{ justify-content:center; }
+  .chip{ width:auto; flex:1 1 0; min-width:0; }
+  .scrollhint{ margin:6px auto 0; }
 
   .cards,.packs{ grid-template-columns:1fr; }
   .zeros{ grid-template-columns:repeat(2,minmax(0,1fr)); }
@@ -430,9 +509,7 @@ button{ font:inherit; color:inherit; background:none; border:0; cursor:pointer; 
   .topbar{ padding:16px; gap:12px; }
   .pill{ display:none; }
   .brand__name{ letter-spacing:.22em; font-size:12.5px; }
-  .hero{ padding:104px 16px 56px; }
-  .hero__foot{ flex-direction:column; align-items:flex-start; gap:14px; }
-  .ticker{ font-size:10px; }
+  .hero{ padding:104px 16px 40px; }
   .zeros{ grid-template-columns:1fr; }
   .zeros li{ flex-direction:row; align-items:baseline; gap:16px; padding:20px; }
   .zeros__n{ font-size:44px; }
@@ -463,7 +540,8 @@ body.has3d .hero__cans{ pointer-events:auto; }
    przeciąganie modelu nie działało w ogóle. Siatka i stopka przepuszczają
    teraz wskaźnik, a łapią go tylko te elementy, które faktycznie są klikalne. */
 .hero__grid,
-.hero__foot{ pointer-events:none; }
+.picker{ pointer-events:none; }
 .lede,
-.rail{ pointer-events:auto; }
+.picker__row,
+.chip{ pointer-events:auto; }
 body.has3d .can{ display:none; }      /* fotorendery tylko jako zapas */
