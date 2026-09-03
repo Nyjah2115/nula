@@ -27,15 +27,15 @@
   const FLAVORS = {
     cherry: {
       name:'Wiśnia', base:'#0f8f60', deep:'#03301f', light:'#1fb87e',
-      blob:'#c8203c', ink:'#ffffff', glow:0x0b8f5e
+      blob:'#c8203c', mark:'#61091a', ink:'#ffffff', glow:0x0b8f5e
     },
     blueberry: {
       name:'Jagoda', base:'#2733a8', deep:'#070d3a', light:'#4a57de',
-      blob:'#7d5cf0', ink:'#ffffff', glow:0x0a49a0
+      blob:'#7d5cf0', mark:'#27186b', ink:'#ffffff', glow:0x0a49a0
     },
     lime: {
       name:'Limonka', base:'#4ea112', deep:'#123f04', light:'#79cc2b',
-      blob:'#e0d02f', ink:'#ffffff', glow:0x5fc93f
+      blob:'#e0d02f', mark:'#2f6b0c', ink:'#ffffff', glow:0x5fc93f
     }
   };
 
@@ -161,7 +161,7 @@
       g.restore();
 
       // rysunek owocu
-      MARK[key](g, cx, H * .50, 1.05, key === 'lime' ? '#2f6b0c' : f.blob);
+      MARK[key](g, cx, H * .50, 1.05, f.mark);
 
       // nazwa smaku pismem odręcznym
       g.save();
@@ -435,7 +435,7 @@
   scene.add(glow);
 
   /* --- puszka --------------------------------------------- */
-  const R = .29, TOP = .78, BOT = -.78;            // smukła puszka 330 ml
+  const R = .43, TOP = .75, BOT = -.75;            // klasyczna puszka 330 ml (66 x 115 mm)
   const can = new THREE.Group();
 
   const labels = {};
@@ -464,37 +464,28 @@
     pts.map(p => new THREE.Vector2(p[0], p[1])), 180
   );
 
-  // szyjka + wieczko z zawiniętym rantem
+  // szyjka + wieczko z zawiniętym rantem (wieczko 52 mm przy korpusie 66 mm)
   can.add(new THREE.Mesh(lathe([
-    [R,       TOP        ], [R*.995, TOP+.028], [R*.955, TOP+.072], [R*.885, TOP+.115],
-    [R*.805,  TOP+.147   ], [R*.762, TOP+.166], [R*.752, TOP+.182], [R*.712, TOP+.178],
-    [R*.672,  TOP+.158   ], [R*.34,  TOP+.152], [0,      TOP+.156]
+    [R,       TOP        ], [R*.994, TOP+.022], [R*.955, TOP+.055], [R*.890, TOP+.088],
+    [R*.822,  TOP+.113   ], [R*.792, TOP+.130], [R*.784, TOP+.144], [R*.748, TOP+.140],
+    [R*.714,  TOP+.124   ], [R*.36,  TOP+.119], [0,      TOP+.123]
   ]), metalMat));
 
   // denko z wklęsłą kopułą
   can.add(new THREE.Mesh(lathe([
-    [R,      BOT        ], [R*.995, BOT-.024], [R*.955, BOT-.058], [R*.885, BOT-.094],
-    [R*.785, BOT-.119   ], [R*.635, BOT-.127], [R*.47,  BOT-.104], [R*.26, BOT-.088],
-    [0,      BOT-.086   ]
+    [R,      BOT        ], [R*.994, BOT-.018], [R*.955, BOT-.045], [R*.892, BOT-.073],
+    [R*.808, BOT-.093   ], [R*.678, BOT-.100], [R*.50,  BOT-.082], [R*.28, BOT-.069],
+    [0,      BOT-.067   ]
   ]), metalMat));
 
   can.rotation.z = -0.26;
   can.rotation.x =  0.06;
-  can.scale.setScalar(0.74);
+  can.scale.setScalar(0.63);
   scene.add(can);
 
   /* --- bąbelki (zawsze) + owoce (na smak) ----------------- */
   const orbit = new THREE.Group();
   scene.add(orbit);
-
-  // bez transmission: przy przezroczystym tle wychodziły z tego szare krążki.
-  // Szklistość robi tu samo odbicie środowiska plus mocny clearcoat.
-  const bubbleMat = new THREE.MeshPhysicalMaterial({
-    color: 0xffffff, roughness: 0, metalness: 0,
-    transparent: true, opacity: .3, depthWrite: false,
-    clearcoat: 1, clearcoatRoughness: 0, ior: 1.4,
-    envMapIntensity: 6, reflectivity: 1
-  });
 
   const props = [];      // { m, set, base, s0, sp, ph, spin }
 
@@ -503,27 +494,17 @@
     const rad = .60 + Math.random() * spread;
     return new THREE.Vector3(
       Math.cos(ang) * rad * 1.4,
-      (Math.random() - .5) * 1.95,
+      (Math.random() - .5) * 1.55,
       Math.sin(ang) * rad - .15
     );
-  }
-
-  // bąbelki
-  for (let i = 0; i < 14; i++) {
-    const m = new THREE.Mesh(SPHERE, bubbleMat);
-    m.position.copy(place(i, 14, .85));
-    const s = .013 + Math.random() * .022;
-    m.scale.setScalar(s);
-    orbit.add(m);
-    props.push({ m, set: null, base: m.position.y, s0: s, sp: .5 + Math.random(), ph: Math.random() * 6.28, spin: 0 });
   }
 
   // owoce — komplet na każdy smak
   Object.keys(BUILD).forEach(k => {
     const makers = BUILD[k];
-    for (let i = 0; i < 8; i++) {
+    for (let i = 0; i < 11; i++) {
       const g = makers[i % makers.length]();
-      g.position.copy(place(i, 8, .78));
+      g.position.copy(place(i, 11, .82));
       const s = .072 + Math.random() * .042;
       g.scale.setScalar(s);
       if (g.userData.flat) {
@@ -613,7 +594,7 @@
     can.rotation.y = auto + state.yaw + state.vel * 6 + spin;
     can.rotation.x = 0.06 + state.pitch;
     can.position.y = Math.sin(now / 1400) * .05 - state.scroll * 1.1;
-    can.scale.setScalar(0.74 * (1 + state.scroll * .12));
+    can.scale.setScalar(0.63 * (1 + state.scroll * .12));
 
     orbit.rotation.y = auto * .35 + state.yaw * .5;
     orbit.position.y = -state.scroll * .7;
