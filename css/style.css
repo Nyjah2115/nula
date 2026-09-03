@@ -247,35 +247,38 @@ button{ font:inherit; color:inherit; background:none; border:0; cursor:pointer; 
 }
 .picker__row{ display:flex; gap:clamp(8px,1vw,14px); }
 
+/* Puszka stoi sama, bez pudełka — zostaje tylko podpis pod spodem.
+   Kafelek jest nadal jednym przyciskiem, ale nie ma tła, ramki ani
+   przycinania, żeby powiększona puszka mogła wyjść poza swój obrys. */
 .chip{
-  position:relative; overflow:hidden; isolation:isolate;
+  position:relative; isolation:isolate;
   width:clamp(112px,10.8vw,152px);
-  padding:14px 16px 16px; text-align:left;
-  border-radius:22px;
-  background:var(--glass); border:1px solid var(--line);
-  backdrop-filter:blur(14px); -webkit-backdrop-filter:blur(14px);
-  transition:transform .5s var(--ease), border-color .5s var(--ease),
-             background .5s var(--ease), box-shadow .5s var(--ease);
+  padding:0; text-align:left;
+  display:grid; grid-template-columns:1fr auto;
+  grid-template-areas:"shot shot" "meta go";
+  align-items:end; gap:0 8px;
+  background:none; border:0; border-radius:0;
+  transition:transform .5s var(--ease);
 }
 .chip[data-flavor="cherry"]   { --chipColor:#e2374d; }
 .chip[data-flavor="blueberry"]{ --chipColor:#8b6bff; }
 .chip[data-flavor="lime"]     { --chipColor:#f2e14b; }
 
-/* kolor smaku wjeżdża od dołu przy najeździe */
+/* poświata smaku pod puszką zamiast wypełnienia kafelka */
 .chip__wash{
-  position:absolute; inset:0; z-index:-1; pointer-events:none;
-  background:linear-gradient(0deg, var(--chipColor) 0%, transparent 82%);
-  opacity:0; transform:translateY(42%);
+  position:absolute; z-index:-1; grid-area:shot;
+  left:50%; top:6px; width:150%; height:132px;
+  transform:translateX(-50%) scale(.72);
+  background:radial-gradient(50% 50% at 50% 52%, var(--chipColor), transparent 68%);
+  opacity:0; pointer-events:none;
   transition:opacity .55s var(--ease), transform .55s var(--ease);
 }
 
-/* Miniatura mieści CAŁĄ puszkę — wcześniej kadr był kwadratowy i ucinał
-   jej górę oraz dół. `contain` zamiast przeskalowania na ślepo. */
 .chip__shot{
+  grid-area:shot;
   position:relative; display:block;
-  width:100%; height:124px; margin-bottom:12px;
-  border-radius:14px; overflow:hidden;
-  background:rgba(0,0,0,.22);
+  width:100%; height:124px; margin-bottom:14px;
+  background:none; border-radius:0; overflow:visible;
 }
 .chip__shot img{
   position:absolute; inset:0;
@@ -283,40 +286,47 @@ button{ font:inherit; color:inherit; background:none; border:0; cursor:pointer; 
   object-fit:contain;
   transition:transform .6s var(--ease), filter .6s var(--ease);
 }
-
-/* render z modelu 3D dostaje wlasny cien - inaczej wisi plasko w kafelku */
 .chip__shot img.is-model{ filter:drop-shadow(0 12px 18px rgba(0,0,0,.5)); }
 
-.chip__meta{ display:flex; flex-direction:column; gap:3px; }
-.chip__meta strong{ font-size:14.5px; font-weight:600; }
-.chip__meta em{ font-style:normal; font-size:11.5px; color:var(--muted); }
+.chip__meta{
+  grid-area:meta;
+  display:flex; flex-direction:column; gap:3px;
+  padding-bottom:6px;
+  border-bottom:1px solid var(--line);
+  transition:border-color .45s var(--ease);
+}
+.chip__meta strong{
+  font-size:14.5px; font-weight:600;
+  color:var(--muted); transition:color .45s var(--ease);
+}
+.chip__meta em{ font-style:normal; font-size:11.5px; color:rgba(255,255,255,.4); }
 
 .chip__go{
-  position:absolute; right:14px; bottom:16px;
-  width:26px; height:26px; border-radius:50%;
+  grid-area:go; align-self:end; justify-self:end;
+  width:24px; height:24px; margin-bottom:6px; border-radius:50%;
   display:grid; place-items:center;
   background:#fff;
   opacity:0; transform:translateX(-8px) scale(.7);
   transition:opacity .45s var(--ease), transform .45s var(--ease);
 }
-.chip__go svg{ width:14px; height:14px; stroke:#0b0b0b; stroke-width:2.4; fill:none;
+.chip__go svg{ width:13px; height:13px; stroke:#0b0b0b; stroke-width:2.4; fill:none;
   stroke-linecap:round; stroke-linejoin:round; }
 
-.chip:hover{
-  transform:translateY(-12px);
-  border-color:rgba(255,255,255,.5);
-  box-shadow:0 26px 50px rgba(0,0,0,.45);
-}
-.chip:hover .chip__wash{ opacity:.55; transform:translateY(0); }
+.chip:hover{ transform:translateY(-12px); }
+.chip:hover .chip__wash{ opacity:.4; transform:translateX(-50%) scale(1); }
 .chip:hover .chip__shot img{
   transform:translateY(-7px) scale(1.12) rotate(-5deg);
-  filter:drop-shadow(0 18px 24px rgba(0,0,0,.55));
+  filter:drop-shadow(0 22px 26px rgba(0,0,0,.6));
 }
+.chip:hover .chip__meta{ border-color:rgba(255,255,255,.65); }
+.chip:hover .chip__meta strong{ color:#fff; }
 .chip:hover .chip__go{ opacity:1; transform:none; }
-.chip:focus-visible{ outline:2px solid #fff; outline-offset:3px; }
+.chip:focus-visible{ outline:2px solid #fff; outline-offset:6px; }
 
-.chip.is-on{ border-color:rgba(255,255,255,.55); background:rgba(255,255,255,.15); }
-.chip.is-on .chip__wash{ opacity:.3; transform:translateY(16%); }
+/* wybrany smak: podkreślenie w kolorze smaku i pełna biel w nazwie */
+.chip.is-on .chip__meta{ border-color:var(--chipColor); }
+.chip.is-on .chip__meta strong{ color:#fff; }
+.chip.is-on .chip__wash{ opacity:.22; transform:translateX(-50%) scale(.92); }
 .chip.is-on .chip__shot img{ animation:chipFloat 4.5s ease-in-out infinite; }
 @keyframes chipFloat{
   0%,100%{ translate:0 0 }
