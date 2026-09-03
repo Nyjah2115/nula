@@ -35,7 +35,7 @@
     g.setTransform(dpr, 0, 0, dpr, 0, 0);
   }
 
-  const COUNT = 54;
+  const COUNT = 24;
   const bubbles = [];
 
   function reset(b, first) {
@@ -49,7 +49,7 @@
     b.wobA  = 5 + Math.random() * 16;                // amplituda kołysania
     b.wobS  = .3 + Math.random() * .5;               // tempo kołysania
     b.phase = Math.random() * 6.283;
-    b.alpha = .16 + Math.random() * .34;
+    b.alpha = .14 + Math.random() * .26;
   }
 
   // size() MUSI pójść pierwsze: reset() losuje pozycję z w/h, a te są zerami,
