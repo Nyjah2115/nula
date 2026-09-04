@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Yellowtail&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/style.css?v=28">
+<link rel="stylesheet" href="css/style.css?v=29">
 </head>
 <body data-flavor="cherry">
 
@@ -193,22 +193,30 @@
 
   <!-- ============ ZERO ============ -->
   <section class="zero" id="zero">
-    <div class="wrap">
-      <p class="eyebrow">Dlaczego VIVRA</p>
-      <h2 class="head">Cztery razy nic<br><em>i jedna rzecz</em></h2>
+    <div class="zero__film">
+      <video class="zero__video" autoplay muted loop playsinline preload="metadata"
+             poster="media/bubbles-poster.jpg" aria-hidden="true">
+        <source src="media/bubbles.mp4" type="video/mp4">
+      </video>
+      <div class="zero__veil" aria-hidden="true"></div>
 
-      <ul class="zeros">
-        <li><span class="zeros__n" data-count="0">0</span><span class="zeros__l">gramów cukru</span></li>
-        <li><span class="zeros__n" data-count="0">0</span><span class="zeros__l">kalorii</span></li>
-        <li><span class="zeros__n" data-count="0">0</span><span class="zeros__l">konserwantów</span></li>
-        <li><span class="zeros__n" data-count="0">0</span><span class="zeros__l">sztucznych barwników</span></li>
-        <li class="is-one"><span class="zeros__n" data-count="1">1</span><span class="zeros__l">wyciśnięty owoc</span></li>
-      </ul>
+      <div class="wrap zero__over">
+        <p class="eyebrow">Dlaczego VIVRA</p>
+        <h2 class="head">Cztery razy nic<br><em>i jedna rzecz</em></h2>
 
-      <p class="zero__note">
-        Słodycz w tym napoju bierze się wyłącznie z owocu — dlatego nie da się jej
-        podkręcić i dlatego każda puszka smakuje tak samo od pierwszej partii.
-      </p>
+        <ul class="zeros">
+          <li><span class="zeros__n">0</span><span class="zeros__l">gramów cukru</span></li>
+          <li><span class="zeros__n">0</span><span class="zeros__l">kalorii</span></li>
+          <li><span class="zeros__n">0</span><span class="zeros__l">konserwantów</span></li>
+          <li><span class="zeros__n">0</span><span class="zeros__l">sztucznych barwników</span></li>
+          <li class="is-one"><span class="zeros__n">1</span><span class="zeros__l">wyciśnięty owoc</span></li>
+        </ul>
+
+        <p class="zero__note">
+          Słodycz w tym napoju bierze się wyłącznie z owocu — dlatego nie da się jej
+          podkręcić i dlatego każda puszka smakuje tak samo od pierwszej partii.
+        </p>
+      </div>
     </div>
   </section>
 
