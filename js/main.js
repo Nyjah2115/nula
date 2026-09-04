@@ -1,5 +1,5 @@
 /* =========================================================
-   NULA — przełączanie smaków, parallaksa hero, wejścia sekcji
+   VIVRA — przełączanie smaków, parallaksa hero, wejścia sekcji
    ========================================================= */
 (() => {
   'use strict';
@@ -40,7 +40,7 @@
     body.dataset.flavor = name;
 
     cans.forEach(c => c.classList.toggle('is-on', c.dataset.flavor === name));
-    if (window.NULA3D) window.NULA3D.setFlavor(name);   // model 3D, jeśli wystartował
+    if (window.VIVRA3D) window.VIVRA3D.setFlavor(name);   // model 3D, jeśli wystartował
     chips.forEach(c => c.classList.toggle('is-on', c.dataset.flavor === name));
 
     // Teksty schodzą i wracają z lekkim przesunięciem względem siebie, żeby
@@ -87,6 +87,23 @@
     steps.forEach(s => s.classList.toggle('is-live', inView && s === best));
     if (inView) setFlavor(best.dataset.flavor);
   }
+
+  /* --- nazwa smaku wchodzi literami ------------------------
+     Litery rozbijam raz, przy starcie, i podpinam każdej opóźnienie.
+     Animacja rusza dopiero, gdy krok stanie się aktywny, więc przy
+     przewijaniu w górę i w dół zagrywa się od nowa. -------------- */
+  document.querySelectorAll('.step__name').forEach(el => {
+    const tekst = el.textContent.trim();
+    el.textContent = '';
+    el.setAttribute('aria-label', tekst);
+    [...tekst].forEach((znak, i) => {
+      const span = document.createElement('span');
+      span.className = 'ltr';
+      span.textContent = znak === ' ' ? '\u00a0' : znak;
+      span.style.transitionDelay = (i * 42) + 'ms';
+      el.appendChild(span);
+    });
+  });
 
   /* --- pigułka nawigacji: podświetlenie jeździ za linkiem -- */
   const pill  = document.querySelector('.pill');

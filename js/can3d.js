@@ -1,5 +1,5 @@
 /* =========================================================
-   NULA — puszka jako model 3D (Three.js, WebGL)
+   VIVRA — puszka jako model 3D (Three.js, WebGL)
 
    Bryła: walec z etykietą (czysty UV, tekstura nie rozjeżdża się
    po obwodzie) + dwa lathe'y na szyjkę z wieczkiem i na denko.
@@ -177,7 +177,7 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
       g.font = '700 132px Inter, system-ui, sans-serif';
       g.letterSpacing = '38px';
       g.shadowColor = 'rgba(0,0,0,.3)'; g.shadowBlur = 18; g.shadowOffsetY = 5;
-      g.fillText('NULA', cx + 19, H * .215);
+      g.fillText('VIVRA', cx + 19, H * .215);
       g.restore();
 
       // kreska + podpis kategorii
@@ -861,7 +861,7 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 
   can.rotation.z = -0.26;
   can.rotation.x =  0.06;
-  can.scale.setScalar(0.63);
+  can.scale.setScalar(0.72);
   scene.add(can);
 
   /* --- bąbelki (zawsze) + owoce (na smak) ----------------- */
@@ -1018,7 +1018,7 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
     swapAtAngle  = state.angle + Math.PI * .85;   // gdy front odjedzie w tył
     swapDeadline = performance.now() + 1400;      // awaryjnie, gdyby ktoś przytrzymał
   }
-  window.NULA3D = { setFlavor, can, camera, scene, state };   // przydatne przy podglądzie
+  window.VIVRA3D = { setFlavor, can, camera, scene, state };   // przydatne przy podglądzie
 
   /* =========================================================
      6. Pętla i rozmiar
@@ -1096,7 +1096,7 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
     const exit = smoothstep(.86, 1.0, p);   // zjazd z kadru na końcu sekwencji
 
     const x = wide ? .58 + (.42 - .58) * move : 0;
-    const s = (.63 + (.95 - .63) * move) * (1 - exit * .5);
+    const s = (.72 + (1.08 - .72) * move) * (1 - exit * .5);
 
     can.position.x = x;
     can.position.y = Math.sin(now / 1400) * .05 + move * .04 + exit * 2.2;

@@ -1,5 +1,5 @@
 /* =========================================================
-   NULA — bąbelki w tle hero
+   VIVRA — bąbelki w tle hero
 
    Osobne płótno 2D pod modelem puszki, nie bryły w scenie 3D. Przezroczysta
    kulka w WebGL-u, za którą nic nie stoi, nie ma czego załamywać i wychodzi
