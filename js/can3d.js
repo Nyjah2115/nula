@@ -928,7 +928,7 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
   const state = {
     angle: 0, vel: 0, idle: 0,
     hover: 0, hoverT: 0, pitch: 0, pitchT: 0,
-    scroll: 0, drag: false, lastX: 0, lastT: 0
+    scroll: 0, specs: 0, drag: false, lastX: 0, lastT: 0
   };
 
   hero.addEventListener('pointermove', e => {
@@ -982,6 +982,14 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
       stageEnd = Math.max(1, r.bottom + window.scrollY - window.innerHeight * .55);
     }
     state.scroll = Math.min(1, Math.max(0, window.scrollY / stageEnd));
+
+    // Osobny postęp dla sekcji składu: 0, gdy jej góra dotyka dołu ekranu,
+    // 1, gdy jej dół mija górę. Na tym odcinku puszka przelatuje przez kadr.
+    if (specs) {
+      const r = specs.getBoundingClientRect();
+      const span = r.height + window.innerHeight;
+      state.specs = Math.min(1, Math.max(0, (window.innerHeight - r.top) / span));
+    }
   }, { passive: true });
 
   const smoothstep = (a, b, x) => {
@@ -1029,6 +1037,7 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
   // Płótno jest przypięte do okna i przechodzi przez kilka sekcji, więc
   // wymiary bierzemy z okna, a nie z hero.
   const flavors = document.querySelector('.flavors');
+  const specs   = document.querySelector('.specs');
   let wide = true, stageEnd = 1;
 
   function resize() {
@@ -1089,25 +1098,44 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 
     can.rotation.y = state.angle + state.hover;
     can.rotation.x = 0.06 + state.pitch;
-    /* --- choreografia: puszka jedzie przez stronę razem ze scrollem ---
-       hero → sekcja smaków (bliżej środka, większa) → wyjazd w górę. */
+    /* --- choreografia w dwóch aktach ---------------------------------
+       Akt I: hero → sekcja smaków, puszka wjeżdża bliżej środka i rośnie,
+       a na końcu limonki WYLATUJE W PRAWO poza kadr.
+       Akt II: przy sekcji składu wraca od prawej krawędzi, przelatuje
+       przez kadr i znika po lewej. Między aktami jest schowana, więc nie
+       wisi nad taśmą ani nad wideo. */
     const p    = state.scroll;
-    const move = smoothstep(.03, .40, p);   // przejście z hero do sekcji smaków
-    const exit = smoothstep(.86, 1.0, p);   // zjazd z kadru na końcu sekwencji
+    const move = smoothstep(.03, .40, p);
+    const fly  = smoothstep(.88, 1.0, p);     // wylot w prawo
+    const q    = state.specs;
+    const przelot = q > .001 && q < .999;
 
-    const x = wide ? .58 + (.42 - .58) * move : 0;
-    const s = (.72 + (1.08 - .72) * move) * (1 - exit * .5);
+    let x, y, s;
+    if (przelot) {
+      const e = smoothstep(0, 1, q);
+      x = 3.6 - 7.2 * e;                      // od prawej krawędzi do lewej
+      y = Math.sin(q * Math.PI) * .32 - .12;  // lekki łuk, nie prosta linia
+      s = .60;
+    } else {
+      x = (wide ? .58 + (.42 - .58) * move : 0) + fly * 3.8;
+      y = Math.sin(now / 1400) * .05 + move * .04;
+      s = .72 + (1.08 - .72) * move;
+    }
 
     can.position.x = x;
-    can.position.y = Math.sin(now / 1400) * .05 + move * .04 + exit * 2.2;
+    can.position.y = y;
     can.scale.setScalar(s);
-    canvas.style.opacity = String(1 - exit);
-    canvas.style.visibility = exit >= 1 ? 'hidden' : 'visible';
+
+    // poza oboma aktami nie ma czego pokazywać
+    canvas.style.opacity = '1';
+    canvas.style.visibility = (przelot || fly < .999) ? 'visible' : 'hidden';
 
     // owoce dryfują razem z puszką, ale wolniej — inaczej scena wygląda sztywno
     orbit.rotation.y = state.angle * .35 + state.hover * .5;
-    orbit.position.x = x;
-    orbit.position.y = move * .12 + exit * 2.2;
+    // owoce towarzyszą puszce tylko w pierwszym akcie
+    orbit.visible = !przelot;
+    orbit.position.x = wide ? .58 + (.42 - .58) * move : 0;
+    orbit.position.y = move * .12 + fly * 2.2;
 
     // komplet owoców aktywnego smaku wyrasta, pozostałe znikają
     for (const k in grow) {
