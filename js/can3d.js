@@ -218,7 +218,7 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
       g.globalAlpha = .78; g.fillStyle = f.onBlob;
       g.font = '600 32px Inter, system-ui, sans-serif';
       g.letterSpacing = '7px';
-      g.fillText('0 KCAL · 0 G CUKRU · 330 ML', cx + 4, H * .845);
+      g.fillText('BEZ CUKRU · BEZ KALORII · 330 ML', cx + 4, H * .845);
       g.restore();
     }
 
@@ -1215,9 +1215,19 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
      Zamiast trzech osobnych scen podmieniam etykietę na materiale, renderuję
      puszkę w ustalonej pozie i przywracam stan — dzięki temu kafelek nie może
      rozjechać się z tym, co widać na środku strony. -------------------- */
-  function paintChips() {
-    const chips = document.querySelectorAll('.chip img');
-    if (!chips.length) return;
+  function paintCans() {
+    // Cele: puszki w pasku smaków i puszki w kartach zestawów. Render robię
+    // raz na smak i podstawiam wszystkim, którzy go potrzebują — inaczej ta
+    // sama scena renderowałaby się sześć razy.
+    const cele = [];
+    document.querySelectorAll('.chip img').forEach(img => {
+      const chip = img.closest('.chip');
+      if (chip) cele.push({ img, key: chip.dataset.flavor });
+    });
+    document.querySelectorAll('img[data-can]').forEach(img => {
+      cele.push({ img, key: img.dataset.can });
+    });
+    if (!cele.length) return;
 
     const W = 360, H = 470;
     // Kadr liczony pod wysokość puszki: przy fov 24° i tej odległości
@@ -1242,12 +1252,15 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
     can.position.set(0, 0, 0);
     can.scale.setScalar(.63);
 
-    chips.forEach(img => {
-      const key = img.closest('.chip').dataset.flavor;
+    const gotowe = {};
+    cele.forEach(({ img, key }) => {
       if (!labels[key]) return;
-      bodyMat.map = labels[key];
-      bodyMat.needsUpdate = true;
-      img.src = offscreen(scene, cam, W, H).toDataURL('image/png');
+      if (!gotowe[key]) {
+        bodyMat.map = labels[key];
+        bodyMat.needsUpdate = true;
+        gotowe[key] = offscreen(scene, cam, W, H).toDataURL('image/png');
+      }
+      img.src = gotowe[key];
       img.classList.add('is-model');
     });
 
@@ -1280,6 +1293,6 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
     populateFruit(BUILD);
     buildSprites(BUILD);
     rebuildLabels();
-    paintChips();
+    paintCans();
   });
 })();

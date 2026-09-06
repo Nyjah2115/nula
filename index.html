@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Yellowtail&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/style.css?v=31">
+<link rel="stylesheet" href="css/style.css?v=33">
 </head>
 <body data-flavor="cherry">
 
@@ -71,7 +71,7 @@
         <dl class="lede__stats">
           <div><dt>Pojemność</dt><dd>330 ml</dd></div>
           <div><dt>Kalorie</dt><dd>0 kcal</dd></div>
-          <div><dt>Cukier</dt><dd>0 g</dd></div>
+          <div><dt>Cukier</dt><dd>0,3 g</dd></div>
           <div><dt>Sok</dt><dd data-copy="juice">4%</dd></div>
         </dl>
       </div>
@@ -142,7 +142,7 @@
           <dl class="step__data">
             <div><dt>Sok</dt><dd>4%</dd></div>
             <div><dt>Kalorie</dt><dd>0 kcal</dd></div>
-            <div><dt>Cukier</dt><dd>0 g</dd></div>
+            <div><dt>Cukier</dt><dd>0,3 g</dd></div>
           </dl>
         </div>
       </article>
@@ -159,7 +159,7 @@
           <dl class="step__data">
             <div><dt>Sok</dt><dd>3%</dd></div>
             <div><dt>Kalorie</dt><dd>0 kcal</dd></div>
-            <div><dt>Cukier</dt><dd>0 g</dd></div>
+            <div><dt>Cukier</dt><dd>0,3 g</dd></div>
           </dl>
         </div>
       </article>
@@ -176,7 +176,7 @@
           <dl class="step__data">
             <div><dt>Sok</dt><dd>5%</dd></div>
             <div><dt>Kalorie</dt><dd>0 kcal</dd></div>
-            <div><dt>Cukier</dt><dd>0 g</dd></div>
+            <div><dt>Cukier</dt><dd>0,3 g</dd></div>
           </dl>
         </div>
       </article>
@@ -186,8 +186,8 @@
   <!-- ============ TAŚMA ============ -->
   <div class="marquee" aria-hidden="true">
     <div class="marquee__track">
-      <span>97% wody źródlanej</span><i aria-hidden="true"></i><span>0 g cukru</span><i aria-hidden="true"></i><span>3 elektrolity</span><i aria-hidden="true"></i><span>0 kcal</span><i aria-hidden="true"></i><span>pH 7,4</span><i aria-hidden="true"></i><span>1 wyciśnięty owoc</span><i aria-hidden="true"></i>
-      <span>97% wody źródlanej</span><i aria-hidden="true"></i><span>0 g cukru</span><i aria-hidden="true"></i><span>3 elektrolity</span><i aria-hidden="true"></i><span>0 kcal</span><i aria-hidden="true"></i><span>pH 7,4</span><i aria-hidden="true"></i><span>1 wyciśnięty owoc</span><i aria-hidden="true"></i>
+      <span>97% wody źródlanej</span><i aria-hidden="true"></i><span>bez cukru</span><i aria-hidden="true"></i><span>3 elektrolity</span><i aria-hidden="true"></i><span>1 kcal / 100 ml</span><i aria-hidden="true"></i><span>pH 7,4</span><i aria-hidden="true"></i><span>1 wyciśnięty owoc</span><i aria-hidden="true"></i>
+      <span>97% wody źródlanej</span><i aria-hidden="true"></i><span>bez cukru</span><i aria-hidden="true"></i><span>3 elektrolity</span><i aria-hidden="true"></i><span>1 kcal / 100 ml</span><i aria-hidden="true"></i><span>pH 7,4</span><i aria-hidden="true"></i><span>1 wyciśnięty owoc</span><i aria-hidden="true"></i>
     </div>
   </div>
 
@@ -246,20 +246,38 @@
         </p>
       </div>
 
-      <table class="table">
-        <caption class="visually-hidden">Wartości odżywcze w 100 ml</caption>
-        <thead><tr><th scope="col">W 100 ml</th><th scope="col">Wartość</th></tr></thead>
-        <tbody>
-          <tr><th scope="row">Wartość energetyczna</th><td>0 kJ / 0 kcal</td></tr>
-          <tr><th scope="row">Węglowodany</th><td>0 g</td></tr>
-          <tr><th scope="row">w tym cukry</th><td>0 g</td></tr>
-          <tr><th scope="row">Białko</th><td>0 g</td></tr>
-          <tr><th scope="row">Sól</th><td>0,04 g</td></tr>
-          <tr><th scope="row">Magnez</th><td>12 mg</td></tr>
-          <tr><th scope="row">Potas</th><td>38 mg</td></tr>
-          <tr><th scope="row">Sok owocowy</th><td>3–5%</td></tr>
-        </tbody>
-      </table>
+      <div class="specs__panel">
+        <table class="table">
+          <caption class="visually-hidden">Wartości odżywcze w 100 ml</caption>
+          <thead><tr><th scope="col">W 100 ml</th><th scope="col">Wartość</th></tr></thead>
+          <tbody>
+            <tr><th scope="row">Wartość energetyczna</th><td>6 kJ / 1 kcal</td></tr>
+            <tr><th scope="row">Tłuszcz</th><td>0 g</td></tr>
+            <tr><th scope="row" class="table__sub">w tym kwasy nasycone</th><td>0 g</td></tr>
+            <tr><th scope="row">Węglowodany</th><td>0,3 g</td></tr>
+            <tr><th scope="row" class="table__sub">w tym cukry</th><td>0,3 g</td></tr>
+            <tr><th scope="row">Białko</th><td>0 g</td></tr>
+            <tr><th scope="row">Sól</th><td>0,03 g</td></tr>
+            <tr><th scope="row">Magnez</th><td>11 mg <em>(3% RWS)</em></td></tr>
+            <tr><th scope="row">Potas</th><td>31 mg <em>(1,6% RWS)</em></td></tr>
+          </tbody>
+        </table>
+
+        <div class="specs__ingredients">
+          <h3>Składniki</h3>
+          <p>
+            Woda źródlana, dwutlenek węgla, sok z wiśni z zagęszczonego soku (2%),
+            regulator kwasowości: kwas cytrynowy, cytrynian magnezu, chlorek potasu,
+            naturalny aromat.
+          </p>
+          <p class="specs__legal">
+            Napój może być oznaczony jako „bez cukru”, bo zawiera mniej niż 0,5 g
+            cukrów na 100 ml, i jako „bez kalorii”, bo dostarcza mniej niż 4 kcal
+            na 100 ml — to progi z rozporządzenia 1924/2006. Wartości podane
+            wyżej są wymyślone, tak jak cała marka.
+          </p>
+        </div>
+      </div>
     </div>
   </section>
 
@@ -271,19 +289,34 @@
 
       <div class="packs">
         <article class="pack">
+          <div class="pack__art pack__art--trio" aria-hidden="true">
+            <img data-can="blueberry" src="media/thumb-blueberry.png" alt="">
+            <img data-can="lime"      src="media/thumb-lime.png"      alt="">
+            <img data-can="cherry"    src="media/thumb-cherry.png"    alt="">
+          </div>
           <h3>Próbnik</h3>
           <p class="pack__q">6 puszek · po 2 z każdego smaku</p>
           <p class="pack__p">29 zł</p>
           <a class="btn" href="#">Do koszyka</a>
         </article>
+
         <article class="pack pack--hot">
           <span class="pack__tag">Najczęściej wybierany</span>
+          <div class="pack__art pack__art--solo" aria-hidden="true">
+            <img data-can="cherry" src="media/thumb-cherry.png" alt="">
+          </div>
           <h3>Zestaw 12</h3>
           <p class="pack__q">12 puszek · smak do wyboru</p>
           <p class="pack__p">52 zł</p>
           <a class="btn btn--solid" href="#">Do koszyka</a>
         </article>
+
         <article class="pack">
+          <div class="pack__art pack__art--rzad" aria-hidden="true">
+            <img data-can="cherry"    src="media/thumb-cherry.png"    alt="">
+            <img data-can="blueberry" src="media/thumb-blueberry.png" alt="">
+            <img data-can="lime"      src="media/thumb-lime.png"      alt="">
+          </div>
           <h3>Subskrypcja</h3>
           <p class="pack__q">24 puszki co miesiąc · –15%</p>
           <p class="pack__p">88 zł<span>/mies.</span></p>
@@ -311,7 +344,7 @@
   }
 }
 </script>
-<script type="module" src="js/can3d.js?v=40"></script>
+<script type="module" src="js/can3d.js?v=42"></script>
 <script src="js/bubbles.js?v=5"></script>
 <script src="js/main.js?v=8"></script>
 </body>
