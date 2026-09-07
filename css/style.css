@@ -688,8 +688,26 @@ body.has3d .can{ display:none; }      /* fotorendery tylko jako zapas */
 .topbar__back{ width:16px; height:16px; stroke:currentColor; stroke-width:2.2; fill:none;
   stroke-linecap:round; stroke-linejoin:round; }
 
-.hero--zam{ min-height:64svh; padding-bottom:clamp(60px,8vh,110px); }
-.hero--zam .lede__index span{ color:var(--muted); }
+/* nagłówek podstrony — bez modelu 3D, sama typografia */
+.naglowek{
+  position:relative; z-index:1;
+  padding:clamp(130px,18vh,190px) clamp(18px,3.4vw,44px) clamp(50px,7vh,90px);
+}
+.naglowek__tytul{
+  margin:0 0 22px;
+  font-size:clamp(52px,6.4vw,116px); line-height:.92;
+  font-weight:800; letter-spacing:-.045em; text-transform:uppercase;
+}
+.naglowek__tytul em{
+  display:block; margin-top:-.1em; margin-left:.06em;
+  font-family:"Yellowtail",cursive; font-style:normal; font-weight:400;
+  font-size:1.06em; letter-spacing:0; text-transform:none;
+  color:var(--accent); transition:color var(--slow);
+}
+.naglowek__opis{
+  margin:0; max-width:44ch;
+  font-size:17px; line-height:1.75; color:var(--muted);
+}
 
 .zam{
   position:relative; z-index:1;
@@ -806,4 +824,34 @@ body.has3d .can{ display:none; }      /* fotorendery tylko jako zapas */
   .suma{ position:static; }
   .opcje--smaki{ grid-template-columns:1fr; }
   .pola{ grid-template-columns:1fr; }
+}
+
+/* =========================================================
+   Przejście między sekwencją smaków a sekcją o wodzie
+
+   Po usunięciu taśmy zostawała tu pusta przerwa. Blok jest celowo krótki
+   i sam zapowiada to, co dalej — zamiast kolejnego pasa z hasłami.
+   ========================================================= */
+.przejscie{
+  position:relative; z-index:1;
+  padding:clamp(70px,11vh,140px) clamp(18px,3.4vw,44px);
+  background:linear-gradient(180deg, rgba(0,0,0,.45), rgba(0,0,0,.7));
+}
+.przejscie__box{ display:flex; flex-direction:column; align-items:center; text-align:center; }
+.przejscie__tekst{
+  margin:0;
+  font-size:clamp(30px,4.2vw,64px); line-height:1.12;
+  font-weight:600; letter-spacing:-.02em;
+  max-width:22ch;
+}
+.przejscie__tekst em{
+  font-family:"Yellowtail",cursive; font-style:normal; font-weight:400;
+  font-size:1.18em; letter-spacing:0;
+  color:var(--accent); transition:color var(--slow);
+}
+.przejscie__kreska{
+  width:1px; height:clamp(46px,7vh,88px);
+  margin-top:clamp(34px,5vh,60px);
+  background:linear-gradient(180deg, var(--accent), transparent);
+  transition:background var(--slow);
 }

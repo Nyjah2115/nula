@@ -9,7 +9,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Yellowtail&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/style.css?v=35">
+<link rel="stylesheet" href="css/style.css?v=37">
 </head>
 <body data-flavor="cherry" class="strona-zam">
 
@@ -27,18 +27,14 @@
 </header>
 
 <main>
-  <section class="hero hero--zam" id="hero">
-    <div class="hero__sky" aria-hidden="true"></div>
-    <div class="hero__cans" aria-hidden="true"></div>
-    <div class="hero__grid">
-      <div class="lede">
-        <p class="lede__index"><span>Krok po kroku</span></p>
-        <h1 class="lede__title">Zamów<br><em>swoją</em></h1>
-        <p class="lede__text">
-          Wybierz zestaw i smak, podaj adres — resztę policzymy na bieżąco.
-          Dostawa od 39 zł jest za darmo.
-        </p>
-      </div>
+  <section class="naglowek">
+    <div class="wrap">
+      <p class="eyebrow">Zamówienie</p>
+      <h1 class="naglowek__tytul">Zamów<br><em>swoją</em></h1>
+      <p class="naglowek__opis">
+        Wybierz zestaw i smak, podaj adres — resztę policzymy na bieżąco.
+        Dostawa powyżej 39 zł jest za darmo.
+      </p>
     </div>
   </section>
 
@@ -153,16 +149,6 @@
   </div>
 </footer>
 
-<script type="importmap">
-{
-  "imports": {
-    "three": "./js/vendor/three.module.js",
-    "three/addons/": "./js/vendor/"
-  }
-}
-</script>
-<script type="module" src="js/can3d.js?v=45"></script>
-<script src="js/bubbles.js?v=5"></script>
 <script src="js/zamowienie.js?v=2"></script>
 </body>
 </html>
