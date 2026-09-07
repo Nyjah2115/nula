@@ -1039,10 +1039,16 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
     camera.updateProjectionMatrix();
     wide = w / h > 1.15;
 
-    // sekwencja trwa od góry strony do końca sekcji smaków
+    // Sekwencja trwa od góry strony do końca sekcji smaków. Na podstronach,
+    // gdzie tej sekcji nie ma, zasięg jest nieskończony — postęp zostaje na
+    // zerze i puszka po prostu stoi w swoim miejscu, zamiast od razu odlecieć.
     if (flavors) {
       const r = flavors.getBoundingClientRect();
       stageEnd = Math.max(1, r.bottom + window.scrollY - h * .55);
+    } else {
+      // Podstrona bez sekwencji: zasięgiem jest samo hero, więc puszka
+      // odjeżdża w górę dokładnie wtedy, gdy schodzi z niego wzrok.
+      stageEnd = Math.max(1, hero.offsetHeight);
     }
   }
   window.addEventListener('resize', resize);

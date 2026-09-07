@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Zamówienie — VIVRA</title>
+<meta name="description" content="Zamów zestaw VIVRA: próbnik, zestaw 12 puszek albo subskrypcję z dostawą co miesiąc.">
+<meta name="robots" content="noindex">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Yellowtail&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css?v=35">
+</head>
+<body data-flavor="cherry" class="strona-zam">
+
+<div class="grain" aria-hidden="true"></div>
+
+<header class="topbar">
+  <a class="brand" href="index.html">
+    <span class="brand__mark" aria-hidden="true"></span>
+    <span class="brand__name">VIVRA</span>
+  </a>
+  <a class="topbar__cart" href="index.html">
+    <svg class="topbar__back" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12H5m0 0 6-6m-6 6 6 6"/></svg>
+    <span>Wróć na stronę</span>
+  </a>
+</header>
+
+<main>
+  <section class="hero hero--zam" id="hero">
+    <div class="hero__sky" aria-hidden="true"></div>
+    <div class="hero__cans" aria-hidden="true"></div>
+    <div class="hero__grid">
+      <div class="lede">
+        <p class="lede__index"><span>Krok po kroku</span></p>
+        <h1 class="lede__title">Zamów<br><em>swoją</em></h1>
+        <p class="lede__text">
+          Wybierz zestaw i smak, podaj adres — resztę policzymy na bieżąco.
+          Dostawa od 39 zł jest za darmo.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <section class="zam">
+    <form class="wrap zam__grid" id="formularz" novalidate>
+
+      <div class="zam__kroki">
+        <fieldset class="krok">
+          <legend><span class="krok__no">01</span> Zestaw</legend>
+          <div class="opcje">
+            <label class="opcja">
+              <input type="radio" name="zestaw" value="probnik" checked>
+              <span class="opcja__box">
+                <strong>Próbnik</strong>
+                <em>6 puszek · po 2 z każdego smaku</em>
+                <b>29 zł</b>
+              </span>
+            </label>
+            <label class="opcja">
+              <input type="radio" name="zestaw" value="dwunastka">
+              <span class="opcja__box">
+                <strong>Zestaw 12</strong>
+                <em>12 puszek · jeden smak</em>
+                <b>52 zł</b>
+              </span>
+            </label>
+            <label class="opcja">
+              <input type="radio" name="zestaw" value="subskrypcja">
+              <span class="opcja__box">
+                <strong>Subskrypcja</strong>
+                <em>24 puszki co miesiąc · −15%</em>
+                <b>88 zł<span>/mies.</span></b>
+              </span>
+            </label>
+          </div>
+        </fieldset>
+
+        <fieldset class="krok" id="krokSmak">
+          <legend><span class="krok__no">02</span> Smak</legend>
+          <p class="krok__uwaga" id="uwagaSmak">W próbniku są wszystkie trzy smaki — nie ma tu czego wybierać.</p>
+          <div class="opcje opcje--smaki">
+            <label class="smak" data-flavor="cherry">
+              <input type="radio" name="smak" value="cherry" checked>
+              <span class="smak__box"><i aria-hidden="true"></i><strong>Wiśnia</strong></span>
+            </label>
+            <label class="smak" data-flavor="blueberry">
+              <input type="radio" name="smak" value="blueberry">
+              <span class="smak__box"><i aria-hidden="true"></i><strong>Jagoda</strong></span>
+            </label>
+            <label class="smak" data-flavor="lime">
+              <input type="radio" name="smak" value="lime">
+              <span class="smak__box"><i aria-hidden="true"></i><strong>Limonka</strong></span>
+            </label>
+          </div>
+        </fieldset>
+
+        <fieldset class="krok">
+          <legend><span class="krok__no">03</span> Ilość</legend>
+          <div class="licznik">
+            <button type="button" class="licznik__btn" data-krok="-1" aria-label="Mniej">−</button>
+            <output class="licznik__ile" id="ile">1</output>
+            <button type="button" class="licznik__btn" data-krok="1" aria-label="Więcej">+</button>
+            <span class="licznik__opis" id="opisIlosci">zestaw</span>
+          </div>
+        </fieldset>
+
+        <fieldset class="krok">
+          <legend><span class="krok__no">04</span> Dostawa</legend>
+          <div class="pola">
+            <label class="pole"><span>Imię i nazwisko</span><input name="imie" autocomplete="name" required></label>
+            <label class="pole"><span>E-mail</span><input name="mail" type="email" autocomplete="email" required></label>
+            <label class="pole pole--szer"><span>Ulica i numer</span><input name="ulica" autocomplete="street-address" required></label>
+            <label class="pole"><span>Kod pocztowy</span><input name="kod" inputmode="numeric" placeholder="00-000" required></label>
+            <label class="pole"><span>Miasto</span><input name="miasto" autocomplete="address-level2" required></label>
+          </div>
+        </fieldset>
+      </div>
+
+      <aside class="zam__suma">
+        <div class="suma">
+          <h2>Podsumowanie</h2>
+          <dl class="suma__lista">
+            <div><dt id="sumaZestaw">Próbnik</dt><dd id="sumaCena">29 zł</dd></div>
+            <div><dt id="sumaSmak">Wszystkie trzy smaki</dt><dd id="sumaPuszki">6 puszek</dd></div>
+            <div><dt>Dostawa</dt><dd id="sumaDostawa">12 zł</dd></div>
+          </dl>
+          <p class="suma__razem"><span>Razem</span><b id="sumaRazem">41 zł</b></p>
+          <p class="suma__info" id="sumaInfo">Do darmowej dostawy brakuje 10 zł.</p>
+          <button class="btn btn--solid suma__btn" type="submit">Zamawiam</button>
+          <p class="suma__demo">
+            Strona pokazowa — zamówienie nigdzie nie jest wysyłane, a żadne dane
+            nie opuszczają Twojej przeglądarki.
+          </p>
+        </div>
+      </aside>
+    </form>
+
+    <div class="wrap potwierdzenie" id="potwierdzenie" hidden>
+      <p class="eyebrow">Gotowe</p>
+      <h2 class="head">Zamówienie<br><em>przyjęte</em></h2>
+      <p class="potwierdzenie__opis" id="potwierdzenieOpis"></p>
+      <a class="btn" href="index.html">Wróć na stronę</a>
+    </div>
+  </section>
+</main>
+
+<footer class="foot">
+  <div class="wrap foot__inner">
+    <span class="brand brand--foot"><span class="brand__mark" aria-hidden="true"></span><span class="brand__name">VIVRA</span></span>
+    <p>Strona pokazowa. VIVRA jest marką fikcyjną, stworzoną wyłącznie na potrzeby portfolio.</p>
+    <p class="foot__by">Projekt i kod — Dawid Tomczyk</p>
+  </div>
+</footer>
+
+<script type="importmap">
+{
+  "imports": {
+    "three": "./js/vendor/three.module.js",
+    "three/addons/": "./js/vendor/"
+  }
+}
+</script>
+<script type="module" src="js/can3d.js?v=45"></script>
+<script src="js/bubbles.js?v=5"></script>
+<script src="js/zamowienie.js?v=2"></script>
+</body>
+</html>
